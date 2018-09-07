@@ -145,13 +145,13 @@ export default {
         antialias: true
       })
       document.getElementById('mergePlane').appendChild(this.app1.view);
-      let canvas = document.querySelector('#mergePlane canvas');
-      canvas.style.width = '100%'
-      canvas.style.height = '100%'
+      // let canvas = document.querySelector('#mergePlane canvas');
+      // canvas.style.width = '100%'
+      // canvas.style.height = '100%'
       this.app1.renderer.view.style.position = 'absolute'
       this.app1.renderer.view.style.display = 'block'
       this.app1.renderer.autoResize = true
-      // this.app1.renderer.resize(document.documentElement.clientWidth, document.documentElement.clientHeight)
+      this.app1.renderer.resize(document.documentElement.clientWidth, document.documentElement.clientHeight)
       container = new PIXI.Container()
       this.app1.renderer.render(container)
       bgSprite = new PIXI.Sprite.fromImage(CONFIG.bodyBg)
