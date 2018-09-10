@@ -384,7 +384,7 @@ export default {
         this.app1.stage.addChild(sprite)
         
         let x = this.isLandscape ? this.app1.screen.width / 2 - 2 * this.distanceX - this.distanceX / 2 + i * this.distanceX : (i % 3) * this.distanceX + this.app1.screen.width / 2 - this.distanceX;
-        let y = this.isLandscape ? this.logoH + 90 : Math.floor(i / 3) * (this.distanceY + sprite.height) + this.logoH + 106
+        let y = this.isLandscape ? this.logoH + 20 : Math.floor(i / 3) * (this.distanceY + sprite.height) + this.logoH + 106
         let rank = 0;
         let occupied = false;
         let width = 92, height = 116
