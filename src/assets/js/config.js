@@ -270,10 +270,39 @@ const obj = {
       'start': 1.6,
       'end': 0.8
     },
-    'color': {
-      'start': 'd9ff80',
-      'end': 'fff986'
+    color: {
+      list: [
+        {
+          value: '49d800',
+          time: 0
+        },
+        {
+          value: '67ff41',
+          time: 0.2
+        },
+        {
+          value: 'FDFF72',
+          time: 0.4
+        },
+        {
+          value: 'FF6622',
+          time: 0.6
+        },
+        {
+          value: 'd9ff41',
+          time: 0.8
+        },
+        {
+          value: 'ffdf41',
+          time: 1
+        }
+      ],
+      isStepped: false
     },
+    // 'color': {
+    //   'start': '43ff2c',
+    //   'end': 'fff986'
+    // },
     'speed': {
       'start': 200,
       'end': 200

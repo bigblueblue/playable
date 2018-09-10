@@ -15,6 +15,8 @@ import tweenManager from 'pixi-tween'
 import Vue from 'vue'
 import FontFaceObserver from 'fontfaceobserver'
 import particles from 'pixi-particles'
+// import 'pixi-layers'
+import '../assets/js/pixi-display'
 export default {
   name: 'mergePlane',
   data () {
@@ -47,13 +49,21 @@ export default {
       rankBox: [],  // 合成
       isLandscape: true, // 默认横屏
       container1: {},
-      downBtn: {}
+      downBtn: {},
+      group1: '',
+      group2: '',
+      group3: '',
+      texture: '',
+      blmask: '',
+      btGift: ''
     }
   },
   watch: {
     step (newval, oldval) {
-      if (oldval > 4) {
-        this.handSprite.visible = false
+      this.handSprite.visible = false
+      if (oldval >= 3) {
+        // this.handSprite.visible = false
+        this.GiftScene.visible = true
       }
     },
     total: {
@@ -62,7 +72,7 @@ export default {
         if (oldval != newval) {
           this.caluObj.text = newval
         }
-        if (newval == 1) {
+        if (newval == 0) {
           this.downBtn.filters = [blurFilter]
           blurFilter.blur = 5 * Math.cos(0.9)
         } else {
@@ -109,27 +119,30 @@ export default {
           that.step = 1
           that.initPIXI()
         } else if (obj.status.flag == 1) {
+          that.app1.stage.removeChild(that.newTexture)
+          clearInterval(that.clearTime)
           let newArr = that.boxList.slice(0)
           let numObj = {}
           for (let key in that.caluObj) {
             numObj[key] = that.caluObj[key]
           }
           that.initPIXI()
-
+          that.GiftScene.visible = true
           that.boxList.forEach((v, i) => {
             if (!newArr[i].rank && !newArr[i].occupied ) {
               v.rank = 0
               v.occupied = false
             } else if (newArr[i].rank) {
               that.createPlane(newArr[i].rank, i)
-              that.total = 3
-              that.cycleFuc()
+              // that.total = 3
+              // that.cycleFuc()
             } else if (!newArr[i].rank && newArr[i].occupied) {
-              that.total = 3
-              that.cycleFuc()
+              // that.total = 3
+              // that.cycleFuc()
             }
           })
-
+          that.total = 3
+          that.cycleFuc()
         } else if (obj.status.flag == 2) {
           that.initPIXI()
           that.passResult(obj.status.rank, obj.status.i)
@@ -154,6 +167,18 @@ export default {
       this.app1.renderer.resize(document.documentElement.clientWidth, document.documentElement.clientHeight)
       container = new PIXI.Container()
       this.app1.renderer.render(container)
+
+      this.app1.stage = new PIXI.display.Stage()
+      this.app1.stage.group.enableSort = true
+      this.group1 = new PIXI.display.Group(2, true) 
+      this.group2 = new PIXI.display.Group(2, true) // 飞机层
+      this.group3 = new PIXI.display.Group(3, true) //合成成功层
+
+      this.app1.stage.addChild(new PIXI.display.Layer(this.group1))
+      this.app1.stage.addChild(new PIXI.display.Layer(this.group2))
+      this.app1.stage.addChild(new PIXI.display.Layer(this.group3))    
+
+      //背景，降落块、logo等静态====================
       bgSprite = new PIXI.Sprite.fromImage(CONFIG.bodyBg)
       bgSprite.x = 0
       bgSprite.y = 0
@@ -165,7 +190,7 @@ export default {
         url: CONFIG.installBtn,
         width: 146,
         height: this.bthHeight,
-        y: this.isLandscape ? this.app1.screen.height - 50 : this.boxList[3].y + 240,
+        y: this.isLandscape ? this.app1.screen.height - 40 : this.boxList[3].y + 240,
         parentCont: this.app1.stage
       })
       this.downBtn.on('pointerdown', () => {
@@ -176,9 +201,62 @@ export default {
       logoSprite.width = this.isLandscape ? 350 : 280
       logoSprite.height = this.isLandscape ? 50 : 40
       logoSprite.x = (this.app1.screen.width - logoSprite.width) / 2
-      logoSprite.y =  this.isLandscape ? 20 : this.logoH
+      logoSprite.y =  this.isLandscape ? 10 : this.logoH
       this.app1.stage.addChild(logoSprite)
-      // console.log(this.app1)
+
+      //底部盒子====================
+      this.texture = new PIXI.Texture.from(CONFIG.blackMask)  // 礼物盒遮罩
+      let rect = new PIXI.Rectangle(0, 0, 98, 88)
+      this.texture.frame = rect
+      this.newTexture = new PIXI.Texture(this.texture.baseTexture, this.texture.frame)
+
+      let GiftScene = new PIXI.Container(), nowTime, txtList = [], inter
+      this.app1.stage.addChild(GiftScene)
+      
+      let btGift = new PIXI.Sprite.fromImage(CONFIG.btGift_bottom)
+      btGift.anchor.set(0.5, 0.5)
+      btGift.width = 98
+      btGift.height = 88
+      btGift.x = this.app1.screen.width / 2
+      btGift.y = this.isLandscape ? this.btnH - btGift.height + 16: this.btnH - btGift.height + 10
+      GiftScene.addChild(btGift)
+      this.btGift = btGift
+      // 黑色礼盒遮罩
+      let blmask = new PIXI.Sprite.fromImage(CONFIG.blackMask)
+      blmask.anchor.set(0.5, 0.5)
+      blmask.width = 98
+      blmask.height = 88
+      blmask.x = this.app1.screen.width / 2
+      blmask.y = btGift.y
+      GiftScene.addChild(blmask)
+      this.blmask = blmask
+      // 计时盒子
+      let caluTime = new PIXI.Sprite.fromImage(CONFIG.caluTime)
+      caluTime.anchor.set(0.5, 0.5)
+      caluTime.width = 42
+      caluTime.height = 34
+      caluTime.x = this.app1.screen.width / 2 - caluTime.width / 2 - caluTime.width - 10
+      caluTime.y = this.btnH - 90 - 16
+      GiftScene.addChild(caluTime)
+      this.caluObj = new PIXI.Text(this.total, {
+        fontSize: 24,
+        fontWeight: 'normal',
+        fontStyle: 'italic',
+        fill: '0xffae43',
+        fontFamily: 'NumFont',
+        align: 'center'
+      })
+      this.caluObj.anchor.set(0.5, 0.5)
+      this.caluObj.x = caluTime.x
+      this.caluObj.y = caluTime.y
+      GiftScene.addChild(this.caluObj)
+      console.log(this.caluObj)
+      let times = 0
+      this.caluObj.text = this.total
+      GiftScene.visible = false
+      this.GiftScene = GiftScene
+    
+      // 第三步就不要执行下面了
       if (this.step >= 3) {
         return 
       }
@@ -191,11 +269,11 @@ export default {
       // 文字提示
       this.hintSprite = new PIXI.Sprite.fromImage(CONFIG.iconHint)
       this.hintSprite.anchor.set(0.5, 0.5)
-      this.hintSprite.width = this.isLandscape ? 300 : 330
-      this.hintSprite.height = this.isLandscape ? 114 : 126
+      this.hintSprite.width = this.isLandscape ? 260 : 330
+      this.hintSprite.height = this.isLandscape ? 100 : 126
       this.app1.stage.addChild(this.hintSprite)
       this.hintSprite.x = this.app1.screen.width / 2
-      this.hintSprite.y = this.btnH - this.bthHeight / 2
+      this.hintSprite.y = this.downBtn.y + this.downBtn.height / 2 - this.hintSprite.height / 2
 
       this.animateTxt = new PIXI.Text('SWIPE TO PLAY!', {
         fontSize: 28,
@@ -213,15 +291,13 @@ export default {
       tween_txt.loop = true
       tween_txt.time = 1000
       tween_txt.easing = PIXI.tween.Easing.linear()
-      // this.animateTxt.width = 24
-      // this.animateTxt.height = 16
       this.app1.stage.addChild(this.animateTxt)
       tween_txt.start()
 
       //高亮
       let roundBox = new PIXI.Graphics()
       roundBox.beginFill(0x0d95f9)
-      roundBox.drawRoundedRect(0, 0, this.boxList[0].width + this.distanceX + 20, this.distanceY + this.boxList[0].height)
+      roundBox.drawRoundedRect(0, 0, this.boxList[0].width + this.distanceX + 20, this.isLandscape ? this.distanceY + this.boxList[0].height - 4: this.distanceY + this.boxList[0].height)
       roundBox.endFill()
       roundBox.x = this.boxList[1].x - (this.distanceX - this.boxList[0].width) / 2 - this.boxList[0].width / 2
       roundBox.y = this.boxList[0].y - this.boxList[0].height / 2
@@ -261,18 +337,17 @@ export default {
       this.app1.ticker.add(delta => {
         PIXI.tweenManager.update()
       })
-      console.log(this.app1)
     },
     layBox () { // 降落块
       for (let i = 0; i < 6; i++) {
         let sprite = new PIXI.Sprite.fromImage(CONFIG.layBox)
         sprite.anchor.set(0.5, 0.5)
-        sprite.width = this.isLandscape ? 80 : 92
-        sprite.height = this.isLandscape ? 80 : 116
+        sprite.width = this.isLandscape ? 40 : 92
+        sprite.height = this.isLandscape ? 50 : 116
         this.app1.stage.addChild(sprite)
         
         let x = this.isLandscape ? this.app1.screen.width / 2 - 2 * this.distanceX - this.distanceX / 2 + i * this.distanceX : (i % 3) * this.distanceX + this.app1.screen.width / 2 - this.distanceX;
-        let y = this.isLandscape ? this.logoH + 80 : Math.floor(i / 3) * (this.distanceY + sprite.height) + this.logoH + 120
+        let y = this.isLandscape ? this.logoH + 64 : Math.floor(i / 3) * (this.distanceY + sprite.height) + this.logoH + 120
         let rank = 0;
         let occupied = false;
         let width = 92, height = 116
@@ -303,9 +378,6 @@ export default {
         index = this.step
       }
       obj = this.boxList[index]
-
-      console.log(r, index)
-      
       plane = new PIXI.Sprite.fromImage(CONFIG.planeList[r - 1])
       plane.anchor.set(0.5, 0.5)
       plane.width = 80
@@ -314,11 +386,14 @@ export default {
       plane.pRank = r
       plane.x = this.boxList[index].x
       plane.y = this.boxList[index].y - 8
-      this.app1.stage.addChild(plane)
       Vue.set(this.planeList, index, plane)
       Vue.set(this.boxList[index], 'rank', r);
       this.$set(this.boxList[index],'occupied',true); // occupied 表示占位
       plane.interactive = true
+      plane.buttonMode = true
+     
+      plane.parentGroup = this.group2
+      this.app1.stage.addChild(plane)
       this.play(plane)
       this.step ++
     },
@@ -326,8 +401,7 @@ export default {
       return Math.floor(Math.random() * len)
     },
     play(obj) { // 合成升级
-      let that = this, onMoveing, curIndex;
-      obj.buttonMode = true
+      let that = this, onMoveing, curIndex, dragContainer, i = 0
       obj.on('pointerdown', onDragStart)
       obj.on('pointerup', onDragEnd)
       obj.on('pointerupoutside', onDragEnd)
@@ -371,24 +445,22 @@ export default {
         // that.createHighlight('', equalArr, 2)
       }
       function onDragEnd () {
-        console.log(that.boxList);
         if (this.dragging) {
-          // that.container1.children[0].destroy()
-          that.container1.destroy(true, true)
-          that.app1.stage.removeChild(that.container1)
-          console.log(that.container1)
           let endPos = this.data.getLocalPosition(this.parent), minArr = [], resultArr = [], equalArr = []
-          let onMoveing, curIndex;
            onMoveing = that.planeList.findIndex(item => {
             return item.pName == this.pName
           })
           curIndex = DetectValid(endPos.x,endPos.y,50,onMoveing);
           console.log(`%c ${curIndex}`,'color:deeppink');
-
+          console.log(that.planeList[onMoveing])
+          if (dragContainer && dragContainer.width) {
+            console.log(that.app1.stage)
+            // dragContainer.destroy()
+            that.app1.stage.removeChild(dragContainer)
+          }
           if (curIndex > -1 && that.boxList[curIndex].rank == this.pRank) {  // 飞机级别一样
             let rk = that.boxList[curIndex].rank, obj2 = that.boxList[onMoveing]
             obj2.rank = 0
-            that.createHighlight(curIndex, equalArr)
             that.planeList[onMoveing].destroy()
             that.planeList[curIndex].destroy()
             Vue.set(that.planeList, onMoveing, {})
@@ -396,7 +468,7 @@ export default {
             that.$set(that.boxList[onMoveing], 'rank', 0)
             clearInterval(that.clearTime)
             that.spillAction(100, 100, that.boxList[curIndex].x, that.boxList[curIndex].y, [CONFIG.circleUrl, CONFIG.starUrl], CONFIG.composeEmitterConfig)
-            if (rk + 1 == 5) { // 最高级
+            if (rk + 1 == 4) { // 最高级
               that.grade = rk + 1
               that.winSuccess(that.grade)
               that.rankBox.push(that.grade)
@@ -421,7 +493,6 @@ export default {
                 that.passResult(that.grade, curIndex)
               }
             }
-            that.app1.stage.removeChild(that.container1)
           } else {
             let planeObj2 = that.planeList[onMoveing]
             console.log(planeObj2.x)
@@ -430,22 +501,12 @@ export default {
             console.log(planeObj2.x)
             Vue.set(that.planeList, onMoveing, planeObj2)
           }
+          this.data = null
+          this.dragging = false
         }
-        this.data = null
-        this.dragging = false
+        
+        
       }
-      function DetectValid(x,y,r,idx){
-          return that.boxList.findIndex((item,index) => {
-            let tx = item.x;
-            let ty = item.y;
-            let dis = Math.sqrt(Math.pow(Math.abs(x - tx), 2) + Math.pow(Math.abs(y - ty), 2));
-            if(dis < r && index !== idx){
-              console.log(`%c tx:${x} ty:${y}`,'color:green');
-              return true;
-            }
-          })
-      }
-
       function onDragMove (event) {
         if (this.dragging) {
           let endPos = this.data.getLocalPosition(this.parent), minArr = [], resultArr = [], equalArr = []
@@ -463,11 +524,52 @@ export default {
             }
           })
           if (curIndex > -1 && that.boxList[curIndex].rank == this.pRank) {  // 飞机级别一样
-            that.createHighlight(curIndex, equalArr)
+            createHighlight(curIndex, equalArr)
           } else {
             return
           }
         }
+      }
+      function DetectValid(x,y,r,idx){
+          return that.boxList.findIndex((item,index) => {
+            let tx = item.x;
+            let ty = item.y;
+            let dis = Math.sqrt(Math.pow(Math.abs(x - tx), 2) + Math.pow(Math.abs(y - ty), 2));
+            if(dis < r && index !== idx){
+              // console.log(`%c tx:${x} ty:${y}`,'color:green');
+              return true;
+            }
+          })
+      }
+      function createHighlight (curIndex, arr, x) {
+        if (i == 1) { //防止执行2次
+          return
+        }
+        i = 1
+        dragContainer = new PIXI.Container()
+        that.app1.stage.addChild(dragContainer)
+        let closerSprite = new PIXI.Sprite.fromImage(CONFIG.closerPic)
+        closerSprite.anchor.set(0.5, 0.5)
+        closerSprite.x = that.boxList[curIndex].x
+        closerSprite.y = that.boxList[curIndex].y - 4
+        closerSprite.width = that.boxList[curIndex].width
+        closerSprite.height = that.boxList[curIndex].height - 8
+        closerSprite.parentGroup = that.group1
+        dragContainer.addChild(closerSprite);
+
+        if (!arr.length) {
+          return
+        }
+        arr.forEach(item => {
+          let dotSprite = new PIXI.Sprite.fromImage(CONFIG.dotPic)
+          dotSprite.anchor.set(0.5, 0.5)
+          dotSprite.x = that.boxList[item].x
+          dotSprite.y = that.boxList[item].y - 2
+          dotSprite.width = that.boxList[item].width
+          dotSprite.height = that.boxList[item].height
+          dotSprite.parentGroup = that.group1
+          dragContainer.addChild(dotSprite)
+        })
       }
     },
     passResult (r, i) { // 点击飞机的时候 
@@ -478,11 +580,12 @@ export default {
       }
       let resultContainer = new PIXI.Container(), that = this
       this.app1.stage.addChild(resultContainer)
+
       let rect = new PIXI.Graphics()
       rect.beginFill(0x54677b, 0.91)
       rect.drawRect(0, 0, this.app1.screen.width, this.app1.screen.height)
       resultContainer.addChild(rect)
-
+      rect.parentGroup = this.group3
       let title = new PIXI.Sprite.fromImage(CONFIG.resultTitle)
       title.anchor.set(0.5, 0.5)
       title.width = 320
@@ -490,15 +593,16 @@ export default {
       title.x = this.app1.screen.width / 2
       title.y = this.isLandscape ? 100 : this.boxList[0].y
       resultContainer.addChild(title)
+      title.parentGroup = this.group3
 
       let lightBg = new PIXI.Sprite.fromImage(CONFIG.resultLight)
       lightBg.width = 302
       lightBg.height = 302
       lightBg.anchor.set(0.5)
       lightBg.x = this.app1.screen.width / 2
-      lightBg.y = title.y + lightBg.height / 2
+      lightBg.y = this.isLandscape ? title.y + 110 :  title.y + lightBg.height / 2
       resultContainer.addChild(lightBg)
-
+      lightBg.parentGroup = this.group3
       this.app1.ticker.add(delta => {
         lightBg.rotation += 0.01
       })
@@ -511,9 +615,12 @@ export default {
       plane.y = lightBg.y
       plane.interactive = true
       resultContainer.addChild(plane)
+      plane.parentGroup = this.group3
+      // console.log(`%c ${plane.x}`, 'color:yellow')
+      // console.log(this.app1.stage)
       plane.on('pointerdown', onDragStart)
       function onDragStart(event) {
-        resultContainer.destroy()
+        // resultContainer.destroy()
         that.app1.stage.removeChild(resultContainer)
         that.createPlane(r, i)
         that.status.flag = 1
@@ -521,72 +628,8 @@ export default {
       }
     },
     cycleFuc () { // 底部盒子倒计时
-      let GiftScene = new PIXI.Container(), nowTime, txtList = [], inter
-      this.app1.stage.addChild(GiftScene)
-
-      let btGift = new PIXI.Sprite.fromImage(CONFIG.btGift_bottom)
-      btGift.anchor.set(0.5, 0.5)
-      btGift.width = 98
-      btGift.height = 88
-      btGift.x = this.app1.screen.width / 2
-      btGift.y = this.isLandscape ? this.btnH - btGift.height + 10: this.btnH - btGift.height + 10
-      GiftScene.addChild(btGift)
-
-
-      // 黑色礼盒遮罩
-      let blmask = new PIXI.Sprite.fromImage(CONFIG.blackMask)
-      blmask.anchor.set(0.5, 0.5)
-      blmask.width = 98
-      blmask.height = 98
-      blmask.x = this.app1.screen.width / 2
-      blmask.y = btGift.y
-      GiftScene.addChild(blmask)
-
-      let texture = new PIXI.Texture.from(CONFIG.blackMask)
-      let rect = new PIXI.Rectangle(0, 0, 70, 20)
-      texture.frame = rect
-      let newTexture = new PIXI.Texture(texture.baseTexture, texture.frame)
-     
-      
-
-      // 计时盒子
-      let caluTime = new PIXI.Sprite.fromImage(CONFIG.caluTime)
-      caluTime.anchor.set(0.5, 0.5)
-      caluTime.width = 42
-      caluTime.height = 34
-      caluTime.x = this.app1.screen.width / 2 - caluTime.width / 2 - caluTime.width - 10
-      caluTime.y = this.btnH - 90 - 20
-      GiftScene.addChild(caluTime)
-      
-
-      
-
-
-      let that = this
-      this.caluObj = new PIXI.Text(this.total, {
-        fontSize: 24,
-        fontWeight: 'normal',
-        fontStyle: 'italic',
-        fill: '0xffae43',
-        fontFamily: 'NumFont',
-        align: 'center'
-      })
-      this.caluObj.anchor.set(0.5, 0.5)
-      this.caluObj.x = caluTime.x
-      this.caluObj.y = caluTime.y
-      // this.caluObj.width = 24
-      // this.caluObj.height = 16
-      GiftScene.addChild(this.caluObj)
-      console.log(this.caluObj)
-      let times = 0
-      this.caluObj.text = this.total
-
-      
-
-
       this.clearTime = setInterval(() => {
         let arr = []
-        // console.table(this.boxList.map(v => v.occupied))
         this.boxList.forEach((item, index) => {
           if (!item.occupied) {
             arr.push(index)
@@ -598,17 +641,17 @@ export default {
           clearInterval(this.inter)
           return
         }
-        texture.frame.width -= 20
+        this.texture.frame.height -= this.texture.baseTexture.height / 3
         this.total--
         this.caluObj.text = this.total
-        // blmask.y -= blmask.height / 3
+        this.blmask.y -= this.blmask.height / 3
         if (this.total == 0) {
-          // blmask.y = btGift.y
           this.dropGift(arr);
-          // setTimeout(()=> {
-          //   this.total = 3
-          // }, 1000)
-          this.total = 3
+          setTimeout(()=> {
+            this.total = 3
+            this.blmask.y = this.isLandscape ? this.btnH - this.btGift.height + 16: this.btnH - this.btGift.height + 10
+            this.texture.frame.height = this.texture.baseTexture.height
+          }, 1000)
         }
       }, 1000)
     },
@@ -657,7 +700,7 @@ export default {
       bgSprite.width = this.app1.screen.width
       bgSprite.height = this.app1.screen.height
       successContainer.addChild(bgSprite)
-
+      successContainer.parentGroup = this.group3
       let lightBg = new PIXI.Sprite.fromImage(CONFIG.successLight)
       lightBg.width = 414
       lightBg.height = 455
@@ -739,7 +782,7 @@ export default {
         })
         blackTxt.anchor.set(0.5)
         blackTxt.x = this.app1.screen.width / 2
-        blackTxt.y = this.isLandscape ? lightBg.y + 90 : lightBg.y + 100
+        blackTxt.y = this.isLandscape ? lightBg.y + 86 : lightBg.y + 100
         successContainer.addChild(blackTxt)
         console.log(blackTxt.style.fontFamily)
         // 按钮
@@ -747,7 +790,7 @@ export default {
           url: CONFIG.downBtn,
           width: this.isLandscape ? 138 : 180,
           height: this.isLandscape ? 60 : 78,
-          y: this.isLandscape ? this.app1.screen.height - 50 : lightBg.y + 100 + blackTxt.height + 20,
+          y: this.isLandscape ? this.app1.screen.height - 20 : this.app1.screen.height - 80,
           parentCont: successContainer
         }).on('pointerdown', () => {
           this.linkAppStore()
@@ -826,30 +869,6 @@ export default {
         console.error(err);
         window.location = url;
       }
-    },
-    createHighlight (curIndex, arr, x) {
-      let that = this
-      this.container1 = new PIXI.Container()
-      this.app1.stage.addChild(this.container1)
-      let closerSprite = new PIXI.Sprite.fromImage(CONFIG.closerPic)
-      closerSprite.anchor.set(0.5, 0.5)
-      closerSprite.x = that.boxList[curIndex].x
-      closerSprite.y = that.boxList[curIndex].y
-      closerSprite.width = that.boxList[curIndex].width
-      closerSprite.height = that.boxList[curIndex].height
-      this.container1.addChild(closerSprite)
-      if (!arr.length) {
-        return
-      }
-      arr.forEach(item => {
-        let dotSprite = new PIXI.Sprite.fromImage(CONFIG.dotPic)
-        dotSprite.anchor.set(0.5, 0.5)
-        dotSprite.x = that.boxList[item].x
-        dotSprite.y = that.boxList[item].y
-        dotSprite.width = that.boxList[item].width
-        dotSprite.height = that.boxList[item].height
-        this.container1.addChild(dotSprite)
-      })
     }
   }
 }
