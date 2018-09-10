@@ -1,9 +1,5 @@
 <template>
   <div id="mergePlane">
-    <!-- <svg height="0" width="0">
-      <clipPath>
-      </clipPath>
-    </svg> -->
   </div>
 </template>
 
@@ -205,11 +201,6 @@ export default {
       this.app1.stage.addChild(logoSprite)
 
       //底部盒子====================
-      this.texture = new PIXI.Texture.from(CONFIG.blackMask)  // 礼物盒遮罩
-      let rect = new PIXI.Rectangle(0, 0, 98, 88)
-      this.texture.frame = rect
-      this.newTexture = new PIXI.Texture(this.texture.baseTexture, this.texture.frame)
-
       let GiftScene = new PIXI.Container(), nowTime, txtList = [], inter
       this.app1.stage.addChild(GiftScene)
       
@@ -230,6 +221,13 @@ export default {
       blmask.y = btGift.y
       GiftScene.addChild(blmask)
       this.blmask = blmask
+
+      this.texture = new PIXI.Texture.from(CONFIG.blackMask)  // 礼物盒遮罩
+      let rect = new PIXI.Rectangle(0, 0, 98, 88)
+      this.texture.frame = rect
+      // this.texture.baseTexture.width = 98
+      // this.texture.baseTexture.height = 88
+      this.newTexture = new PIXI.Texture(this.texture.baseTexture, this.texture.frame)
       // 计时盒子
       let caluTime = new PIXI.Sprite.fromImage(CONFIG.caluTime)
       caluTime.anchor.set(0.5, 0.5)
@@ -641,11 +639,13 @@ export default {
           clearInterval(this.inter)
           return
         }
+        console.log(this.texture.baseTexture.height)
         this.texture.frame.height -= this.texture.baseTexture.height / 3
         this.total--
         this.caluObj.text = this.total
         this.blmask.y -= this.blmask.height / 3
         if (this.total == 0) {
+          this.blmask.y = this.isLandscape ? this.btnH - this.btGift.height + 16: this.btnH - this.btGift.height + 10 - this.blmask.height
           this.dropGift(arr);
           setTimeout(()=> {
             this.total = 3
