@@ -80,7 +80,7 @@ const obj = {
   dotPic: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAF0AAABdCAMAAADwr5rxAAAAeFBMVEUAAAD1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f/1/f+RGjVOAAAAJ3RSTlMAupUq3Wn48hLPI8puTRkFUkQUDwK9kFgM1XP048N/fGYcqoZJNqZ9ntx5AAABiUlEQVRo3u3Zx27bQBRG4Z9F7EWiepdcct7/DSNmEdswGQekLhwF8wHcDIGzIjgXM+o34Y3/F+tZoy9sRtSfyItE/Sp/fx1ePwCRf1W3+hzDs4baHGlF51odgpwbT8M1ly03aaBPyrh98aJxXlIgnnZ9IFGx0FiLYg9eR/wQ6B6CMJ/rgymQV7qPpNFH2ZZ8IzMbv5HjfLPX1ZPMzCOiucwsoVSWyMYJVvI4vMpCCUttIZCFAELFMJeFOcQCalmoAbWPDVfvE4ahXb310HXP8+Q4zlhZlumdh/oL2Ndns5l+e6Ddw9Vd/d+qu3nGzTOO08HNM26e+c76AlAMiSwkECs0PVtawlQWSlhqBSdZOMNKazjKggdrVRideSbrH5WUw0VmCkhlJonyqewEcv4LtQxV+U5mghC68v497ld3ETDRJ2tIS41Tdt4NtzxutpdGQyWTtO9eW1oUMa3l8zTRAHXMTXSq1a3yI34p9YZ39Md1D/Z+pX7NLuUmGFQvjpNEX7iuV95mQL3LT6BYRpDXYo2bAAAAAElFTkSuQmCC',
   circleUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAYAAAAGBAMAAAAS4vJ7AAAAFVBMVEUAAAD///////////////////////9Iz20EAAAABnRSTlMAvPQe+R/sW7oPAAAAG0lEQVQI12MwVDRgEEsTYFBLcwDRQH4AAxAAAClcAwkQ3XiRAAAAAElFTkSuQmCC',
   starUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAMAAAAolt3jAAAATlBMVEUAAAD///////////////////////////////////////////////////////////////////////////////////////////////////+QlxstAAAAGXRSTlMADPGBXhP49ZpCNR0H9+zlycKppGw9KyQG1pUHHgAAAFdJREFUCNeFzVkOgCAMRdHKjOA8vv1vVKk14cPE80G4CbT0p+HzsJJmNDkFlyRboO+A/D5GoUhYX9JtT50TmI+cC4Tay0+j5+G+68gLZbamSlBNnXalTxffDwSVAN2fXwAAAABJRU5ErkJggg==',
-  lightCircle: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAAsCAQAAAC0jZKKAAACPElEQVR4AbXXcW/TMBAF8EtCypa1LCDB9/98ILG1dKNNCOZZT8h6N4562eZTzH8/ni6dfWns4kqtvbMOT2tmv+0XasG/F1aTLFxd5lDcCS8o0tyX58K9bVA9WZe40LNNqLkevrJr1HvrC1vgQoM820/UqQZubQBKWDKjDJjP+wg41/J/eAOQsGb2rWDlvKzMTyEMaJvBIHNpBdswOfhoZ4VL2h3Irc+srSiJPYv9B1Mr3IHcCS2ZJTFf2+RZ1NEWD5PF7mmQ/nfs85I9klb4KrNCa2YkZitcXmVZpwL3zFtwpYH6l3cWtqDMPP+Fb+zWPthW6BvUIJmZuOTN7APqKOjB9vZAuAM6ArvFE9CSeI5Y1B7PPfAFMPKMKMWVZmbCzKusoveoKcODjQDzgx3c6GnUFnADOAFGV5V16B7PI2BkBRjgmf4IWBbYu8I6lPuhSa2w4xP8k7CF/l5Q7HuiZW9ST+wpjgKLvP9ed6gAJXztWcG/2CaAJ/tKlJSnm7RTTHHATQAnwAFKWCn/H3y2eH2L2ZfDIf06rXD8m768l//cAvzN/kBe709a8cPFQ4jXFA8hHpvVh1D9scmrqfbYrD/oO0s5caYrDvraqwlwW3811V6mvXUrLtOq6x+NYCt0vIqv/2hgcUPWqoFFRixlB9tEIxZHWKHJLmuGQraifijUMTbIq63QzDLGrh+8wVYO3rI6nzdohc+81H3cDHiijxvNfAJ9Wv855hJL5nnlB2Tw8ojzC7UelrXqk/cPn233eGpGsfAAAAAASUVORK5CYII=',
+  lightCircle: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAArlBMVEUAAAD1+P/09//09//2+P/2+P/09//z9v/z9v/z9v/4+f/z9v/y9f/19//z9v/y9f/y9f/z9v/y9f/19//y9f/09//z9v/09v/z9v/z9v/z9v/z9v/y9f/z9v/z9v/z9v/z9v/2+P/z9v/y9f/z9v/z9v/y9f/y9f/y9f/y9f/y9f/19//z9v/6+//5+//6+//09//09v/6+//19//09//6+//6+//6+//6+//7/P8R9bdKAAAAOnRSTlMAAgoNEAdNITEtBT8WJR4UfkU7NykZjIVZcW5eeKqaalQbnWdbSrenY1GSrZbp3dTLyci9u7ilkXxjOX9lJAAAAi9JREFUOMt1U+eWsjAQXZJQQkmoSpUqgr3tqu//Yt8QDrLrOd/9oWTunKl3viTpawa8Pt9fEpKmhy4jAVmfTILUiT7SCBPOTZNzgpEsXOSRkgMZ3BDhQclUAGMBJ0gHogRCeFhYxjxglk8FfEsNOJgs4EdgrzSB1jzXNQzX9TTfYibz8MRDLEWzqGc4awWwdgxw0ZTyXb6OTfpyXEfpwyZJmrBQ4PGiJtanXjizjGfYh12dx3Fed2HfPB2fcSyNAUhgUbd4RHWUpradpvDxCF3NCog8BfA9p49/lvZyAYC/n7h3PKqaIoSOA0szlLBefq+2q6qCn+9l3SjGEEIX4yohQNHF9v6622TZZndd2VFXOJ7PCAIHyEDddViny212urXt7ZRtl2kerl2qciQNJajUVZo8Xew39+P5fLxvVgs7TiCHKEJCpkoNJYntRZW1l8Ph0mbVwo7+43A+HM6fDnOK1eZ2vFyOt88Uc5G7071t76fd/neR0CYTbUZ2dc3GNqu5zb+D2otB7WFQ+TwoUcQw6uj3qKPCgQzjPiEHhHCbRw7LsgFplMePBAKUsKz3tpxn0TcdbDuK864pwufaZxDgLRjtZYBgijABDIIxjJcmtj1CZgr1tVFy/SA5V/OpoqL3DREhWgqiNQAgWmqxoPTIxCMLIZC9CrLXAIPsS5MgMAtaHI6kY2IGTBVggUmwLI2HM5+ejAnhJoAToPWJAmI+XsgEQOjP8UrSx/V/GP4Beow7na1oxPcAAAAASUVORK5CYII=',
   starEmitterConfig: {
     alpha: {
       list: [
@@ -263,41 +263,12 @@ const obj = {
   },
   lightEmitterConfig: {
     'alpha': {
-      'start': 0.8,
-      'end': 0.1
+      'start': 0.5,
+      'end': 1
     },
     'scale': {
       'start': 1.6,
       'end': 0.8
-    },
-    color: {
-      list: [
-        {
-          value: '49d800',
-          time: 0
-        },
-        {
-          value: '67ff41',
-          time: 0.2
-        },
-        {
-          value: 'FDFF72',
-          time: 0.4
-        },
-        {
-          value: 'FF6622',
-          time: 0.6
-        },
-        {
-          value: 'd9ff41',
-          time: 0.8
-        },
-        {
-          value: 'ffdf41',
-          time: 1
-        }
-      ],
-      isStepped: false
     },
     // 'color': {
     //   'start': '43ff2c',

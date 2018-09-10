@@ -51,26 +51,34 @@ export default {
       group3: '',
       texture: '',
       blmask: '',
-      btGift: ''
+      btGift: '',
+      fullText: '',
+      changeFlag: false
     }
   },
   watch: {
     step (newval, oldval) {
-      this.handSprite.visible = false
       if (oldval >= 3) {
-        // this.handSprite.visible = false
+        this.handSprite.visible = false
         this.GiftScene.visible = true
       }
     },
     total: {
       handler(newval, oldval) {
-        let blurFilter = new PIXI.filters.BlurFilter()
+        let filter = new PIXI.filters.ColorMatrixFilter()
         if (oldval != newval) {
           this.caluObj.text = newval
         }
         if (newval == 0) {
-          this.downBtn.filters = [blurFilter]
-          blurFilter.blur = 5 * Math.cos(0.9)
+          this.downBtn.filters = [filter]
+          let matrix = filter.matrix
+          let count = 0.55
+          matrix[1] = Math.sin(count) * 3;
+          // matrix[2] = Math.cos(count);
+          //matrix[1] = Math.cos(count) * 1.5;
+          matrix[2] = Math.sin(count / 3) * 2;
+          // matrix[5] = Math.sin(count / 2);
+          // matrix[6] = Math.sin(count / 4);
         } else {
           this.downBtn.filters = null
         }
@@ -150,17 +158,19 @@ export default {
     },
     initPIXI () {
       let container, bgSprite, logoSprite
-      this.app1 = new PIXI.Application(414, 736, {
+      const canvasW = this.isLandscape ? 736 : 414
+      const canvasH = this.isLandscape ? 414 : 736
+      this.app1 = new PIXI.Application(canvasW, canvasH, {
         antialias: true
       })
       document.getElementById('mergePlane').appendChild(this.app1.view);
-      // let canvas = document.querySelector('#mergePlane canvas');
-      // canvas.style.width = '100%'
-      // canvas.style.height = '100%'
+      let canvas = document.querySelector('#mergePlane canvas');
+      canvas.style.width = '100%'
+      canvas.style.height = '100%'
       this.app1.renderer.view.style.position = 'absolute'
       this.app1.renderer.view.style.display = 'block'
       this.app1.renderer.autoResize = true
-      this.app1.renderer.resize(document.documentElement.clientWidth, document.documentElement.clientHeight)
+      // this.app1.renderer.resize(document.documentElement.clientWidth, document.documentElement.clientHeight)
       container = new PIXI.Container()
       this.app1.renderer.render(container)
 
@@ -186,7 +196,7 @@ export default {
         url: CONFIG.installBtn,
         width: 146,
         height: this.bthHeight,
-        y: this.isLandscape ? this.app1.screen.height - 40 : this.boxList[3].y + 240,
+        y: this.isLandscape ? this.app1.screen.height - 40 : this.boxList[3].y + 300,
         parentCont: this.app1.stage
       })
       this.downBtn.on('pointerdown', () => {
@@ -195,9 +205,9 @@ export default {
 
       logoSprite = new PIXI.Sprite.fromImage(CONFIG.logo)
       logoSprite.width = this.isLandscape ? 350 : 280
-      logoSprite.height = this.isLandscape ? 50 : 40
+      logoSprite.height = this.isLandscape ? 60 : 40
       logoSprite.x = (this.app1.screen.width - logoSprite.width) / 2
-      logoSprite.y =  this.isLandscape ? 10 : this.logoH
+      logoSprite.y =  this.isLandscape ? 20 : this.logoH
       this.app1.stage.addChild(logoSprite)
 
       //底部盒子====================
@@ -213,21 +223,16 @@ export default {
       GiftScene.addChild(btGift)
       this.btGift = btGift
       // 黑色礼盒遮罩
-      let blmask = new PIXI.Sprite.fromImage(CONFIG.blackMask)
-      blmask.anchor.set(0.5, 0.5)
-      blmask.width = 98
-      blmask.height = 88
-      blmask.x = this.app1.screen.width / 2
-      blmask.y = btGift.y
-      GiftScene.addChild(blmask)
-      this.blmask = blmask
-
       this.texture = new PIXI.Texture.from(CONFIG.blackMask)  // 礼物盒遮罩
       let rect = new PIXI.Rectangle(0, 0, 98, 88)
       this.texture.frame = rect
-      // this.texture.baseTexture.width = 98
-      // this.texture.baseTexture.height = 88
-      this.newTexture = new PIXI.Texture(this.texture.baseTexture, this.texture.frame)
+      this.newTexture = new PIXI.Texture(this.texture.baseTexture, this.texture.frame);
+      let blmask = new PIXI.Sprite.from(this.newTexture);
+      blmask.x = this.app1.screen.width / 2 - 49;
+      blmask.y = this.isLandscape ? this.btnH - btGift.height + 16 - 44 : this.btnH - btGift.height + 10 - 44;
+      GiftScene.addChild(blmask)
+      this.blmask = blmask
+      
       // 计时盒子
       let caluTime = new PIXI.Sprite.fromImage(CONFIG.caluTime)
       caluTime.anchor.set(0.5, 0.5)
@@ -276,7 +281,7 @@ export default {
       this.animateTxt = new PIXI.Text('SWIPE TO PLAY!', {
         fontSize: 28,
         fontWeight: 'normal',
-        fontStyle: 'italic',
+        fontStyle: 'normal',
         fill: '0x000000',
         fontFamily: 'NumFont',
         align: 'center'
@@ -323,6 +328,7 @@ export default {
       this.handSprite.y = this.boxList[2].y + this.boxList[2].height / 2
       this.handSprite.x = this.boxList[1].x + this.boxList[1].width + 16
       this.app1.stage.addChild(this.handSprite)
+      this.handSprite.parentGroup = this.group3 
       this.tween1 = PIXI.tweenManager.createTween(this.handSprite)
       this.tween1.from({x: this.boxList[1].x + this.boxList[1].width - 18}).to({x: this.boxList[1].x + this.boxList[1].width + 40})
       this.tween1.time = 1000
@@ -332,9 +338,29 @@ export default {
         console.log('start')
       })
       this.tween1.start()
+      let maskCount =0 ;
       this.app1.ticker.add(delta => {
         PIXI.tweenManager.update()
+        if (this.changeFlag) {
+          maskCount += delta * 0.5
+          if(maskCount >= 88){
+            maskCount = 88
+          }
+        }else{
+          maskCount = 0
+        }
+        this.updateBlmask(88 - maskCount)
       })
+    },
+    updateBlmask(h){
+      if(h > 88){
+        h = 88
+      }
+      this.texture = new PIXI.Texture.from(CONFIG.blackMask)  // 礼物盒遮罩
+      let rect = new PIXI.Rectangle(0, 0, 98, h)
+      this.texture.frame = rect
+      this.newTexture = new PIXI.Texture(this.texture.baseTexture, this.texture.frame);
+      this.blmask.texture =this.newTexture;
     },
     layBox () { // 降落块
       for (let i = 0; i < 6; i++) {
@@ -345,7 +371,7 @@ export default {
         this.app1.stage.addChild(sprite)
         
         let x = this.isLandscape ? this.app1.screen.width / 2 - 2 * this.distanceX - this.distanceX / 2 + i * this.distanceX : (i % 3) * this.distanceX + this.app1.screen.width / 2 - this.distanceX;
-        let y = this.isLandscape ? this.logoH + 64 : Math.floor(i / 3) * (this.distanceY + sprite.height) + this.logoH + 120
+        let y = this.isLandscape ? this.logoH + 90 : Math.floor(i / 3) * (this.distanceY + sprite.height) + this.logoH + 120
         let rank = 0;
         let occupied = false;
         let width = 92, height = 116
@@ -399,7 +425,7 @@ export default {
       return Math.floor(Math.random() * len)
     },
     play(obj) { // 合成升级
-      let that = this, onMoveing, curIndex, dragContainer, i = 0
+      let that = this, onMoveing, curIndex, dragContainer, i = 0, tinting// 绿色在哪
       obj.on('pointerdown', onDragStart)
       obj.on('pointerup', onDragEnd)
       obj.on('pointerupoutside', onDragEnd)
@@ -413,18 +439,13 @@ export default {
         console.log(that.oldPosition.x, that.oldPosition.y)
         if (that.step == 3) {
           that.tween1.stop()
-          //that.tween1.on('end', () => {
-            // that.tween.remove()
+          that.tween1.on('end', () => {
+            that.tween.remove()
           PIXI.tweenManager.removeTween(that.tween1)
-          //})
-          that.shadeSprite.visible = false
+          })
           that.app1.stage.removeChild(that.animateTxt)
           that.app1.stage.removeChild(that.hintSprite)
           that.app1.stage.removeChild(that.handSprite)
-          that.app1.stage.removeChild(that.roundBox)
-          that.fixedBox.forEach(item => {
-            that.app1.stage.removeChild(item)
-          })
         }
         onMoveing = that.planeList.findIndex(item => {
           if (!item.x) {
@@ -457,6 +478,13 @@ export default {
             that.app1.stage.removeChild(dragContainer)
           }
           if (curIndex > -1 && that.boxList[curIndex].rank == this.pRank) {  // 飞机级别一样
+            if (that.step == 3) { // 第一次当合并的时候
+              that.shadeSprite.visible = false
+              that.app1.stage.removeChild(that.roundBox)
+              that.fixedBox.forEach(item => {
+                that.app1.stage.removeChild(item)
+              })
+            }
             let rk = that.boxList[curIndex].rank, obj2 = that.boxList[onMoveing]
             obj2.rank = 0
             that.planeList[onMoveing].destroy()
@@ -498,6 +526,7 @@ export default {
             planeObj2.y = that.oldPosition.y
             console.log(planeObj2.x)
             Vue.set(that.planeList, onMoveing, planeObj2)
+            i = 0
           }
           this.data = null
           this.dragging = false
@@ -510,9 +539,10 @@ export default {
           let endPos = this.data.getLocalPosition(this.parent), minArr = [], resultArr = [], equalArr = []
           this.x = endPos.x
           this.y = endPos.y
-           onMoveing = that.planeList.findIndex(item => {
+          onMoveing = that.planeList.findIndex(item => {
             return item.pName == this.pName
           })
+          tinting = onMoveing
           curIndex = DetectValid(endPos.x,endPos.y,50,onMoveing);
           console.log(`%c ${curIndex}`,'color:deeppink');
 
@@ -521,29 +551,34 @@ export default {
               equalArr.push(index)
             }
           })
-          if (curIndex > -1 && that.boxList[curIndex].rank == this.pRank) {  // 飞机级别一样
-            createHighlight(curIndex, equalArr)
-          } else {
-            return
-          }
+          // 有最近的, 且级别一样， 没有或者级别不一样
+          if (curIndex > -1 && that.boxList[curIndex].rank == this.pRank) {
+            tinting = curIndex
+          } 
+          console.log(`%c ${tinting}`, 'color: red')
+          createHighlight(tinting, equalArr)
         }
       }
-      function DetectValid(x,y,r,idx){
+      function DetectValid (x,y,r,idx){
           return that.boxList.findIndex((item,index) => {
             let tx = item.x;
             let ty = item.y;
             let dis = Math.sqrt(Math.pow(Math.abs(x - tx), 2) + Math.pow(Math.abs(y - ty), 2));
-            if(dis < r && index !== idx){
+            if(dis < r && index != idx){
               // console.log(`%c tx:${x} ty:${y}`,'color:green');
               return true;
             }
           })
       }
-      function createHighlight (curIndex, arr, x) {
-        if (i == 1) { //防止执行2次
-          return
+      function createHighlight (curIndex, arr) {
+        console.log(`%c ${curIndex}`, 'color: pink')
+        // if (i == 1) { //防止执行2次
+        //   return
+        // }
+        // i = 1
+        if (dragContainer && dragContainer.width) {
+          that.app1.stage.removeChild(dragContainer)
         }
-        i = 1
         dragContainer = new PIXI.Container()
         that.app1.stage.addChild(dragContainer)
         let closerSprite = new PIXI.Sprite.fromImage(CONFIG.closerPic)
@@ -560,11 +595,10 @@ export default {
         }
         arr.forEach(item => {
           let dotSprite = new PIXI.Sprite.fromImage(CONFIG.dotPic)
-          dotSprite.anchor.set(0.5, 0.5)
-          dotSprite.x = that.boxList[item].x
-          dotSprite.y = that.boxList[item].y - 2
+          dotSprite.x = that.boxList[item].x - that.boxList[item].width / 2 
+          dotSprite.y = that.boxList[item].y - that.boxList[item].height / 2
           dotSprite.width = that.boxList[item].width
-          dotSprite.height = that.boxList[item].height
+          dotSprite.height = 96
           dotSprite.parentGroup = that.group1
           dragContainer.addChild(dotSprite)
         })
@@ -594,21 +628,27 @@ export default {
       title.parentGroup = this.group3
 
       let lightBg = new PIXI.Sprite.fromImage(CONFIG.resultLight)
-      lightBg.width = 302
-      lightBg.height = 302
+      lightBg.width = 400
+      lightBg.height = 400
       lightBg.anchor.set(0.5)
       lightBg.x = this.app1.screen.width / 2
       lightBg.y = this.isLandscape ? title.y + 110 :  title.y + lightBg.height / 2
       resultContainer.addChild(lightBg)
       lightBg.parentGroup = this.group3
-      this.app1.ticker.add(delta => {
-        lightBg.rotation += 0.01
-      })
+      // this.app1.ticker.add(delta => {
+      //   lightBg.rotation += 0.03
+      // })
+      let tw = PIXI.tweenManager.createTween(lightBg);
+      tw.from({rotation:0});
+      tw.to({rotation:2*Math.PI});
+      tw.time = 3000;
+      tw.loop = true;
+      tw.start();
 
       let plane = new PIXI.Sprite.fromImage(CONFIG.planeList[this.grade - 1])
       plane.anchor.set(0.5, 0.5)
-      plane.width =  120 
-      plane.height = 120 
+      plane.width =  140 
+      plane.height = 140 
       plane.x = lightBg.x
       plane.y = lightBg.y
       plane.interactive = true
@@ -618,10 +658,12 @@ export default {
       // console.log(this.app1.stage)
       plane.on('pointerdown', onDragStart)
       function onDragStart(event) {
-        // resultContainer.destroy()
         that.app1.stage.removeChild(resultContainer)
         that.createPlane(r, i)
         that.status.flag = 1
+        if (that.step == 4) {
+          that.dropGift()
+        }
         that.cycleFuc()
       }
     },
@@ -636,56 +678,85 @@ export default {
         if(arr.length == 0){
           console.log('没有位置了')
           clearInterval(this.clearTime)
+          this.fullText = new PIXI.Text('FULL', {
+            fontSize: 24,
+            fontWeight: 'normal',
+            fontStyle: 'normal',
+            fill: '0xffffff',
+            fontFamily: 'NumFont',
+            align: 'center'
+          })
+          this.fullText.anchor.set(0.5, 0.5)
+          this.fullText.x = this.btGift.x
+          this.fullText.y = this.btGift.y
+          this.app1.stage.addChild(this.fullText)
           clearInterval(this.inter)
           return
         }
+        if (this.fullText && this.fullText.x) {
+          this.app1.stage.removeChild(this.fullText)
+        }
         console.log(this.texture.baseTexture.height)
-        this.texture.frame.height -= this.texture.baseTexture.height / 3
         this.total--
         this.caluObj.text = this.total
-        this.blmask.y -= this.blmask.height / 3
+        let h = this.total / 3 * 88
+        this.changeFlag = true
         if (this.total == 0) {
-          this.blmask.y = this.isLandscape ? this.btnH - this.btGift.height + 16: this.btnH - this.btGift.height + 10 - this.blmask.height
           this.dropGift(arr);
           setTimeout(()=> {
-            this.total = 3
-            this.blmask.y = this.isLandscape ? this.btnH - this.btGift.height + 16: this.btnH - this.btGift.height + 10
-            this.texture.frame.height = this.texture.baseTexture.height
+            this.total = 3;
+            h = 88;
+            this.changeFlag = false
           }, 1000)
         }
       }, 1000)
     },
     dropGift (arr) {
-      let n = arr[this.randomInt(arr.length)]
-      this.$set(this.boxList[n],'occupied',true);
-      let gift = new PIXI.Sprite.fromImage(CONFIG.btGift)
-      this.app1.stage.addChild(gift)
-      gift.anchor.set(0.5, 0.5)
-      gift.width = 98
-      gift.height = 88
-      gift.x = this.boxList[n].x;
-      console.log(gift.x)
-      const tween = PIXI.tweenManager.createTween(gift)
-      tween.from({y: 0}).to({y: this.boxList[n].y - 8})
-      tween.easing = PIXI.tween.Easing.inOutBack()
-      tween.time = 800;
-      
-      gift.interactive = true
-      const tween2 = PIXI.tweenManager.createTween(gift)
-      tween2.from({rotation: 0}).to({rotation: 0.5})
-      tween2.time = 500
-      tween2.easing = PIXI.tween.Easing.inOutBack()
-      tween2.pingPong = true
-      tween2.repeat = 2
-      tween2.delay = 2000
-      tween.start().chain(tween2)
-      // 打开
-      gift.on('pointerdown', () => {
-        PIXI.tweenManager.removeTween(tween)
-        this.spillAction(100, 100, gift.x, this.boxList[n].y, [CONFIG.circleUrl, CONFIG.lightCircle], CONFIG.lightEmitterConfig)
-        this.app1.stage.removeChild(gift)
-        this.createPlane(1, n)
-      })
+      //将掉箱子的作为一个数组
+      let newArr = [], giftList = []
+      if (this.step == 4 && !arr) { //第一次掉三个
+        if (this.boxList[1].rank) {
+          newArr = [2, 4, 5]
+        } else {
+          newArr = [1, 4, 5]
+        }
+      } else {
+        let o = arr[this.randomInt(arr.length)]
+        newArr = [o]
+      }
+      for (let m = 0; m < newArr.length; m++) {
+        let n = newArr[m]
+        this.$set(this.boxList[n],'occupied',true);
+        let gift = new PIXI.Sprite.fromImage(CONFIG.btGift)
+        this.app1.stage.addChild(gift)
+        gift.anchor.set(0.5, 0.5)
+        gift.width = 98
+        gift.height = 88
+        gift.x = this.boxList[n].x;
+        console.log(gift.x)
+        const tween = PIXI.tweenManager.createTween(gift)
+        tween.from({y: 0}).to({y: this.boxList[n].y - 8})
+        tween.easing = PIXI.tween.Easing.inOutBack()
+        tween.time = 500 + m * 200
+        gift.interactive = true
+
+        // 闪动动画
+        const tween2 = PIXI.tweenManager.createTween(gift)
+        tween2.from({rotation: 0}).to({rotation: 0.3})
+        tween2.time = 360
+        tween2.easing = PIXI.tween.Easing.inOutBack()
+        tween2.pingPong = true
+        tween2.repeat = 3
+        tween2.delay = 2000
+        tween.start().chain(tween2)
+        // 打开
+        gift.on('pointerdown', () => {
+          PIXI.tweenManager.removeTween(tween)
+          this.spillAction(100, 100, gift.x, this.boxList[n].y, [CONFIG.circleUrl, CONFIG.lightCircle], CONFIG.lightEmitterConfig)
+          this.app1.stage.removeChild(gift)
+          this.createPlane(1, n)
+        })
+      }
     },
     winSuccess (a) {
       let successContainer = new PIXI.Container(), that = this, giftList = [], tweenList = []
@@ -790,7 +861,7 @@ export default {
           url: CONFIG.downBtn,
           width: this.isLandscape ? 138 : 180,
           height: this.isLandscape ? 60 : 78,
-          y: this.isLandscape ? this.app1.screen.height - 20 : this.app1.screen.height - 80,
+          y: this.isLandscape ? this.app1.screen.height - 40 : this.app1.screen.height - 80,
           parentCont: successContainer
         }).on('pointerdown', () => {
           this.linkAppStore()
