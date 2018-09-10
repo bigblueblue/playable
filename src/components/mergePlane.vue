@@ -22,7 +22,7 @@ export default {
       distanceY: 10,
       boxList: [],
       step: 1,
-      logoH: 60, // logo的y
+      logoH: 140, // logo的y
       btnH: 0, // 安装btn的y
       bthHeight: 58,
       handSprite: {}, //手sprite
@@ -53,7 +53,9 @@ export default {
       blmask: '',
       btGift: '',
       fullText: '',
-      changeFlag: false
+      changeFlag: false,
+      caluTime: '',
+      shiningBtn: ''
     }
   },
   watch: {
@@ -70,17 +72,20 @@ export default {
           this.caluObj.text = newval
         }
         if (newval == 0) {
-          this.downBtn.filters = [filter]
-          let matrix = filter.matrix
-          let count = 0.55
-          matrix[1] = Math.sin(count) * 3;
-          // matrix[2] = Math.cos(count);
-          //matrix[1] = Math.cos(count) * 1.5;
-          matrix[2] = Math.sin(count / 3) * 2;
+          this.downBtn.visible = false
+          this.shiningBtn.visible = true
+          // this.downBtn.filters = [filter]
+          // let matrix = filter.matrix
+          // let count = 0.55
+          // this.downBtn.scale.x = 1 + Math.sin(count) * 0.04;
+          // this.downBtn.scale.y = 1 + Math.cos(count) * 0.04;
+          // matrix[2] = Math.sin(count / 3) * 2;
           // matrix[5] = Math.sin(count / 2);
           // matrix[6] = Math.sin(count / 4);
         } else {
-          this.downBtn.filters = null
+          // this.downBtn.filters = null
+          this.downBtn.visible = true
+          this.shiningBtn.visible = false
         }
       }
     }
@@ -112,7 +117,7 @@ export default {
         } else {
           that.isLandscape = false
         }
-        console.log(that.isLandscape)
+        // console.log(that.isLandscape)
         let canvas = document.querySelector('#mergePlane canvas');
         canvas.parentNode.removeChild(canvas);
         let obj = {}
@@ -196,16 +201,23 @@ export default {
         url: CONFIG.installBtn,
         width: 146,
         height: this.bthHeight,
-        y: this.isLandscape ? this.app1.screen.height - 40 : this.boxList[3].y + 300,
+        y: this.isLandscape ? this.app1.screen.height - 40 : this.app1.screen.height - 116,
         parentCont: this.app1.stage
       })
       this.downBtn.on('pointerdown', () => {
         this.linkAppStore()
       })
-
+      this.shiningBtn = this.installBtn({
+        url: CONFIG.shiningBtn,
+        width: 177,
+        height: 90,
+        y: this.isLandscape ? this.app1.screen.height - 40 : this.app1.screen.height - 116,
+        parentCont: this.app1.stage
+      })
+      this.shiningBtn.visible = false
       logoSprite = new PIXI.Sprite.fromImage(CONFIG.logo)
-      logoSprite.width = this.isLandscape ? 350 : 280
-      logoSprite.height = this.isLandscape ? 60 : 40
+      logoSprite.width = this.isLandscape ? 350 : 210
+      logoSprite.height = this.isLandscape ? 60 : 34
       logoSprite.x = (this.app1.screen.width - logoSprite.width) / 2
       logoSprite.y =  this.isLandscape ? 20 : this.logoH
       this.app1.stage.addChild(logoSprite)
@@ -241,6 +253,7 @@ export default {
       caluTime.x = this.app1.screen.width / 2 - caluTime.width / 2 - caluTime.width - 10
       caluTime.y = this.btnH - 90 - 16
       GiftScene.addChild(caluTime)
+      this.caluTime = caluTime
       this.caluObj = new PIXI.Text(this.total, {
         fontSize: 24,
         fontWeight: 'normal',
@@ -371,7 +384,7 @@ export default {
         this.app1.stage.addChild(sprite)
         
         let x = this.isLandscape ? this.app1.screen.width / 2 - 2 * this.distanceX - this.distanceX / 2 + i * this.distanceX : (i % 3) * this.distanceX + this.app1.screen.width / 2 - this.distanceX;
-        let y = this.isLandscape ? this.logoH + 90 : Math.floor(i / 3) * (this.distanceY + sprite.height) + this.logoH + 120
+        let y = this.isLandscape ? this.logoH + 90 : Math.floor(i / 3) * (this.distanceY + sprite.height) + this.logoH + 106
         let rank = 0;
         let occupied = false;
         let width = 92, height = 116
@@ -404,8 +417,8 @@ export default {
       obj = this.boxList[index]
       plane = new PIXI.Sprite.fromImage(CONFIG.planeList[r - 1])
       plane.anchor.set(0.5, 0.5)
-      plane.width = 80
-      plane.height = 80
+      plane.width = 88
+      plane.height = 66
       plane.pName = Math.random().toString(36).substr(2)
       plane.pRank = r
       plane.x = this.boxList[index].x
@@ -418,6 +431,29 @@ export default {
      
       plane.parentGroup = this.group2
       this.app1.stage.addChild(plane)
+      const plane_tween = PIXI.tweenManager.createTween(plane)
+      let minScale = 0.12, maxScale =  r == 3 ? 0.25 : 0.2
+      plane_tween.from({
+        scale: {
+          x: minScale,
+          y: minScale
+        }
+      })
+      plane_tween.to({
+        scale: {
+          x: maxScale,
+          y: maxScale
+        }
+      })
+      plane_tween.time = 100
+      plane_tween.easing = PIXI.tween.Easing.inOutBack()
+      plane_tween.on('start', () => {
+        console.log('hhhh')
+      })
+      if (this.step >= 3) {
+        plane_tween.start()
+      }
+
       this.play(plane)
       this.step ++
     },
@@ -632,12 +668,10 @@ export default {
       lightBg.height = 400
       lightBg.anchor.set(0.5)
       lightBg.x = this.app1.screen.width / 2
-      lightBg.y = this.isLandscape ? title.y + 110 :  title.y + lightBg.height / 2
+      lightBg.y = this.isLandscape ? title.y + 110 :  title.y + 160
       resultContainer.addChild(lightBg)
       lightBg.parentGroup = this.group3
-      // this.app1.ticker.add(delta => {
-      //   lightBg.rotation += 0.03
-      // })
+
       let tw = PIXI.tweenManager.createTween(lightBg);
       tw.from({rotation:0});
       tw.to({rotation:2*Math.PI});
@@ -647,18 +681,35 @@ export default {
 
       let plane = new PIXI.Sprite.fromImage(CONFIG.planeList[this.grade - 1])
       plane.anchor.set(0.5, 0.5)
-      plane.width =  140 
+      plane.width =  196 
       plane.height = 140 
       plane.x = lightBg.x
       plane.y = lightBg.y
       plane.interactive = true
       resultContainer.addChild(plane)
       plane.parentGroup = this.group3
+      const result_tween = PIXI.tweenManager.createTween(plane)
+      result_tween.time = 200
+      result_tween.easing = PIXI.tween.Easing.linear()
+      result_tween.from({
+        scale: {
+          x: 0.12,
+          y: 0.12
+        }
+      })
+      result_tween.to({
+        scale: {
+          x: 0.36,
+          y: 0.36
+        }
+      })
+      result_tween.start()
       // console.log(`%c ${plane.x}`, 'color:yellow')
       // console.log(this.app1.stage)
       plane.on('pointerdown', onDragStart)
       function onDragStart(event) {
         that.app1.stage.removeChild(resultContainer)
+        PIXI.tweenManager.removeTween(result_tween)
         that.createPlane(r, i)
         that.status.flag = 1
         if (that.step == 4) {
@@ -690,11 +741,15 @@ export default {
           this.fullText.x = this.btGift.x
           this.fullText.y = this.btGift.y
           this.app1.stage.addChild(this.fullText)
+          this.caluTime.visible = false
+          this.caluObj.visible = false
           clearInterval(this.inter)
           return
         }
         if (this.fullText && this.fullText.x) {
           this.app1.stage.removeChild(this.fullText)
+          this.caluTime.visible = true
+          this.caluObj.visible = true
         }
         console.log(this.texture.baseTexture.height)
         this.total--
@@ -736,19 +791,31 @@ export default {
         console.log(gift.x)
         const tween = PIXI.tweenManager.createTween(gift)
         tween.from({y: 0}).to({y: this.boxList[n].y - 8})
-        tween.easing = PIXI.tween.Easing.inOutBack()
+        tween.easing = PIXI.tween.Easing.outBounce()
         tween.time = 500 + m * 200
         gift.interactive = true
 
+        const tween3 = PIXI.tweenManager.createTween(gift)
+        tween3.easing = PIXI.tween.Easing.linear()
+        tween3.from({scale: {x: 1, y: 1}})
+        tween3.to({scale: {x: 1.1, y: 1.1}})
+        tween3.time = 500
+        tween3.pingPong = true
+        tween3.loop = false
         // 闪动动画
-        const tween2 = PIXI.tweenManager.createTween(gift)
-        tween2.from({rotation: 0}).to({rotation: 0.3})
-        tween2.time = 360
-        tween2.easing = PIXI.tween.Easing.inOutBack()
-        tween2.pingPong = true
-        tween2.repeat = 3
-        tween2.delay = 2000
-        tween.start().chain(tween2)
+        tween.start().chain(tween3)
+        let timer = null;
+        clearInterval(timer)
+        timer = setInterval(function(){
+          const tween2 = PIXI.tweenManager.createTween(gift)
+          tween2.from({rotation: 0}).to({rotation: 0.3})
+          tween2.time = 160
+          tween2.easing = PIXI.tween.Easing.inOutBack()
+          tween2.pingPong = true
+          tween2.repeat = 3
+          tween2.expire = true;
+          tween2.start()
+        }, 5000)
         // 打开
         gift.on('pointerdown', () => {
           PIXI.tweenManager.removeTween(tween)
@@ -777,7 +844,7 @@ export default {
       lightBg.height = 455
       lightBg.anchor.set(0.5)
       lightBg.x = this.app1.screen.width / 2
-      lightBg.y = this.isLandscape ? this.app1.screen.height / 2 : this.boxList[0].y + 302 / 2
+      lightBg.y = this.isLandscape ? this.app1.screen.height / 2 : this.app1.screen.height / 2 - 20
       successContainer.addChild(lightBg)
 
       this.app1.ticker.add(delta => {
@@ -785,7 +852,7 @@ export default {
       })
       let plane = new PIXI.Sprite.fromImage(CONFIG.planeList[0])
       plane.anchor.set(0.5, 0.5)
-      plane.width = 120
+      plane.width = 168
       plane.height = 120
       plane.x = lightBg.x
       plane.y = lightBg.y
@@ -793,7 +860,6 @@ export default {
       successContainer.addChild(plane)
 
       // 盒子先出来，logo出来，底部黑字和按钮出来
-
       let arr = [
         [{x: -20, y: 0}, {x: 76, y: 180}],
         [{x: -80, y: 180}, {x: 48, y: 500}],
@@ -823,7 +889,7 @@ export default {
       bigLogo.anchor.set(0.5, 1)
       bigLogo.x = this.app1.screen.width / 2
       bigLogo.width = this.isLandscape ? 138 : 226
-      bigLogo.height = this.isLandscape ? 100 : 164
+      bigLogo.height = this.isLandscape ? 98 : 160
       successContainer.addChild(bigLogo)
       const tween_logo = PIXI.tweenManager.createTween(bigLogo)
       tween_logo.from({y: - bigLogo.height / 2}).to({y: this.isLandscape ? lightBg.y / 2 + 20: lightBg.y / 2 + bigLogo.height / 2})
@@ -833,7 +899,7 @@ export default {
 
       let bigPlane = new PIXI.Sprite.fromImage(CONFIG.planeList[a - 1])
       bigPlane.anchor.set(0.5, 0.5)
-      bigPlane.width = 120
+      bigPlane.width = 168
       bigPlane.height = 120
       bigPlane.x = lightBg.x
       bigPlane.y = lightBg.y
@@ -845,23 +911,24 @@ export default {
         // 黑字  按钮
         let blackTxt = new PIXI.Text('MERGE,PLANE,AND DEVELOP\nYOUR OWN TEAM!', {
           fontFamily: 'NumFont',
-          fontSize: 22,
+          fontSize: this.isLandscape  ? 32 : 22,
           align: 'center',
           fill: 'black',
+          lineHeight: 40,
+          // letterSpacing: 4,
           stroke: '#ffffff',
           strokeThickness: 6
         })
         blackTxt.anchor.set(0.5)
         blackTxt.x = this.app1.screen.width / 2
-        blackTxt.y = this.isLandscape ? lightBg.y + 86 : lightBg.y + 100
+        blackTxt.y = this.isLandscape ? lightBg.y + 86 : bigPlane.y + 160,
         successContainer.addChild(blackTxt)
-        console.log(blackTxt.style.fontFamily)
         // 按钮
         this.installBtn({
           url: CONFIG.downBtn,
           width: this.isLandscape ? 138 : 180,
           height: this.isLandscape ? 60 : 78,
-          y: this.isLandscape ? this.app1.screen.height - 40 : this.app1.screen.height - 80,
+          y: this.isLandscape ? this.app1.screen.height - 40 : this.app1.screen.height - 140,
           parentCont: successContainer
         }).on('pointerdown', () => {
           this.linkAppStore()
@@ -876,9 +943,9 @@ export default {
       tween_1.loop = false
 
       tween_2.time = 1200
-      tween_2.easing = PIXI.tween.Easing.inCubic()
+      tween_2.easing = PIXI.tween.Easing.linear()
       
-      tween_1.from({scale: {x: 1, y: 1}})
+      tween_1.from({scale: {x: 0.4, y: 0.4}})
       tween_1.to({scale: {x: 0, y: 0}})
       tween_1.on('end', () => {
         PIXI.tweenManager.removeTween(tween_1)
@@ -887,15 +954,15 @@ export default {
         tween_2.start()
       })
 
-      tween_2.from({scale: {x: 1.5, y: 1.5}})
-      tween_2.to({scale: {x: 2, y: 2}})
-      tween_2.repeat = 2
+      tween_2.from({scale: {x: 0.1, y: 0.1}})
+      tween_2.to({scale: {x: 0.4, y: 0.4}})
+      tween_2.loop = false
   
       
       tween_logo.chain(tween_1)
-      this.app1.ticker.add(delta => {
-        PIXI.tweenManager.update()
-      })
+      // this.app1.ticker.add(delta => {
+      //   PIXI.tweenManager.update()
+      // })
     },
      /**
      * 粒子动画
