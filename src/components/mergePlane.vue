@@ -22,7 +22,7 @@ export default {
       distanceY: 10,
       boxList: [],
       step: 1,
-      logoH: 140, // logo的y
+      logoH: 120, // logo的y
       btnH: 0, // 安装btn的y
       bthHeight: 58,
       handSprite: {}, //手sprite
@@ -55,7 +55,8 @@ export default {
       fullText: '',
       changeFlag: false,
       caluTime: '',
-      shiningBtn: ''
+      shiningBtn: '',
+      shineFlag: false
     }
   },
   watch: {
@@ -67,25 +68,9 @@ export default {
     },
     total: {
       handler(newval, oldval) {
-        let filter = new PIXI.filters.ColorMatrixFilter()
+        let filter = new PIXI.filters.BlurFilter()
         if (oldval != newval) {
           this.caluObj.text = newval
-        }
-        if (newval == 0) {
-          this.downBtn.visible = false
-          this.shiningBtn.visible = true
-          // this.downBtn.filters = [filter]
-          // let matrix = filter.matrix
-          // let count = 0.55
-          // this.downBtn.scale.x = 1 + Math.sin(count) * 0.04;
-          // this.downBtn.scale.y = 1 + Math.cos(count) * 0.04;
-          // matrix[2] = Math.sin(count / 3) * 2;
-          // matrix[5] = Math.sin(count / 2);
-          // matrix[6] = Math.sin(count / 4);
-        } else {
-          // this.downBtn.filters = null
-          this.downBtn.visible = true
-          this.shiningBtn.visible = false
         }
       }
     }
@@ -143,11 +128,7 @@ export default {
               v.occupied = false
             } else if (newArr[i].rank) {
               that.createPlane(newArr[i].rank, i)
-              // that.total = 3
-              // that.cycleFuc()
             } else if (!newArr[i].rank && newArr[i].occupied) {
-              // that.total = 3
-              // that.cycleFuc()
             }
           })
           that.total = 3
@@ -199,9 +180,9 @@ export default {
       this.layBox()
       this.downBtn = this.installBtn({
         url: CONFIG.installBtn,
-        width: 146,
+        width: 148,
         height: this.bthHeight,
-        y: this.isLandscape ? this.app1.screen.height - 40 : this.app1.screen.height - 116,
+        y: this.isLandscape ? this.app1.screen.height - 40: this.app1.screen.height - 116,
         parentCont: this.app1.stage
       })
       this.downBtn.on('pointerdown', () => {
@@ -209,12 +190,57 @@ export default {
       })
       this.shiningBtn = this.installBtn({
         url: CONFIG.shiningBtn,
-        width: 177,
-        height: 90,
+        width: 212,
+        height: 118,
         y: this.isLandscape ? this.app1.screen.height - 40 : this.app1.screen.height - 116,
         parentCont: this.app1.stage
       })
-      this.shiningBtn.visible = false
+      this.shiningBtn.alpha = 0
+      const shine_tween = PIXI.tweenManager.createTween(this.shiningBtn)
+      shine_tween.time = 2000
+      shine_tween.pingPong = true
+      shine_tween.loop = true
+      shine_tween.from({
+        alpha: 0
+      })
+      shine_tween.to({
+        alpha: 1
+      })
+      shine_tween.easing = PIXI.tween.Easing.linear()
+      shine_tween.on('start', () => {
+        console.log('i`m shining')
+      })
+      shine_tween.start()
+      // //间隔2s按钮发光一次
+      // if (this.step == 3) {
+      //   shine_tween.start()
+      // }
+      
+      // let shineTime = null
+      // let t = 0
+      // shineTime = setInterval(() => {
+        
+      //   // this.downBtn.visible = !this.downBtn.visible
+      //   this.shineFlag = !this.shineFlag
+      //   return;
+      //   t++
+      //   // this.downBtn.visible = true
+      //   // this.shiningBtn.visible = false
+      //   this.shineFlag = true
+      //   if (t == 3) {
+      //     this.shineFlag = false
+      //     //setTimeout(() => {
+      //       // shine_tween.start()
+      //       // shine_tween.on('end', () => {
+      //         // this.downBtn.visible = false
+      //         // this.shiningBtn.visible = true
+      //       // })
+      //     //}, 1000)
+      //     t = 0
+      //   }
+      // }, 2000)
+
+
       logoSprite = new PIXI.Sprite.fromImage(CONFIG.logo)
       logoSprite.width = this.isLandscape ? 350 : 210
       logoSprite.height = this.isLandscape ? 60 : 34
@@ -257,7 +283,7 @@ export default {
       this.caluObj = new PIXI.Text(this.total, {
         fontSize: 24,
         fontWeight: 'normal',
-        fontStyle: 'italic',
+        // fontStyle: 'italic',
         fill: '0xffae43',
         fontFamily: 'NumFont',
         align: 'center'
@@ -351,7 +377,7 @@ export default {
         console.log('start')
       })
       this.tween1.start()
-      let maskCount =0 ;
+      let maskCount =0, shineCount = 0
       this.app1.ticker.add(delta => {
         PIXI.tweenManager.update()
         if (this.changeFlag) {
@@ -363,6 +389,14 @@ export default {
           maskCount = 0
         }
         this.updateBlmask(88 - maskCount)
+        // if (this.shineFlag) {
+        //   // this.downBtn.visible = false
+        //   shineCount += 0.08
+        //   this.shiningBtn.alpha = shineCount > 1 ? 1 : shineCount
+        // } else {
+        //   this.shiningBtn.alpha = 0
+        //   this.downBtn.visible = true
+        // }
       })
     },
     updateBlmask(h){
@@ -384,7 +418,7 @@ export default {
         this.app1.stage.addChild(sprite)
         
         let x = this.isLandscape ? this.app1.screen.width / 2 - 2 * this.distanceX - this.distanceX / 2 + i * this.distanceX : (i % 3) * this.distanceX + this.app1.screen.width / 2 - this.distanceX;
-        let y = this.isLandscape ? this.logoH + 20 : Math.floor(i / 3) * (this.distanceY + sprite.height) + this.logoH + 106
+        let y = this.isLandscape ? this.logoH + 20 : Math.floor(i / 3) * (this.distanceY + sprite.height) + this.logoH + 114
         let rank = 0;
         let occupied = false;
         let width = 92, height = 116
@@ -513,6 +547,7 @@ export default {
             // dragContainer.destroy()
             that.app1.stage.removeChild(dragContainer)
           }
+          let planeObj2 = {}, planeObj1 = {}
           if (curIndex > -1 && that.boxList[curIndex].rank == this.pRank) {  // 飞机级别一样
             if (that.step == 3) { // 第一次当合并的时候
               that.shadeSprite.visible = false
@@ -555,8 +590,41 @@ export default {
                 that.passResult(that.grade, curIndex)
               }
             }
+          } else if (curIndex > -1 && that.boxList[curIndex].rank && that.boxList[curIndex].rank != this.pRank){ // 飞机交换
+            planeObj2 = that.planeList[onMoveing], planeObj1 = that.planeList[curIndex]
+            let rank2 = this.pRank, rank1 = planeObj1.pRank
+            let rankTemp = rank2
+            rank2 = rank1
+            rank1 = rankTemp
+            console.log(rank2, rank1)
+            console.log(planeObj2.x)
+            planeObj2.x = that.boxList[curIndex].x
+            planeObj2.y = that.boxList[curIndex].y - 8
+            planeObj2.pRank = rank1
+            planeObj1.x = that.boxList[onMoveing].x
+            planeObj1.y = that.boxList[onMoveing].y - 8
+            planeObj1.pRank = rank2
+            console.log(planeObj2.x)
+            Vue.set(that.planeList, onMoveing, planeObj1)
+            Vue.set(that.planeList, curIndex, planeObj2)
+            Vue.set(that.boxList[curIndex], 'rank', rank1)
+            Vue.set(that.boxList[onMoveing], 'rank', rank2)
+            i = 0
+          } else if (curIndex > -1 && !that.boxList[curIndex].rank && !that.boxList[curIndex].occupied){  // 交换位置，只有一个飞机
+            planeObj2 = that.planeList[onMoveing]
+            console.log(planeObj2)
+            planeObj2.x = that.boxList[curIndex].x
+            planeObj2.y = that.boxList[curIndex].y - 8
+            Vue.set(that.planeList, onMoveing, {})
+            Vue.set(that.planeList, curIndex, planeObj2)
+            console.log(planeObj2.pRank)
+            Vue.set(that.boxList[curIndex],'rank', planeObj2.pRank)
+            Vue.set(that.boxList[onMoveing],'rank',0)
+            Vue.set(that.boxList[curIndex],'occupied',true)
+            Vue.set(that.boxList[onMoveing],'occupied', false)
+            i = 0
           } else {
-            let planeObj2 = that.planeList[onMoveing]
+            planeObj2 = that.planeList[onMoveing]
             console.log(planeObj2.x)
             planeObj2.x = that.oldPosition.x
             planeObj2.y = that.oldPosition.y
@@ -580,7 +648,7 @@ export default {
           })
           tinting = onMoveing
           curIndex = DetectValid(endPos.x,endPos.y,50,onMoveing);
-          console.log(`%c ${curIndex}`,'color:deeppink');
+          // console.log(`%c ${curIndex}`,'color:deeppink');
 
           that.boxList.forEach((item, index) => {
             if (index != onMoveing && item.rank == this.pRank) {
@@ -591,7 +659,7 @@ export default {
           if (curIndex > -1 && that.boxList[curIndex].rank == this.pRank) {
             tinting = curIndex
           } 
-          console.log(`%c ${tinting}`, 'color: red')
+          // console.log(`%c ${tinting}`, 'color: red')
           createHighlight(tinting, equalArr)
         }
       }
@@ -607,7 +675,7 @@ export default {
           })
       }
       function createHighlight (curIndex, arr) {
-        console.log(`%c ${curIndex}`, 'color: pink')
+        // console.log(`%c ${curIndex}`, 'color: pink')
         // if (i == 1) { //防止执行2次
         //   return
         // }
@@ -714,6 +782,7 @@ export default {
         that.status.flag = 1
         if (that.step == 4) {
           that.dropGift()
+
         }
         that.cycleFuc()
       }
@@ -751,7 +820,7 @@ export default {
           this.caluTime.visible = true
           this.caluObj.visible = true
         }
-        console.log(this.texture.baseTexture.height)
+        // console.log(this.texture.baseTexture.height)
         this.total--
         this.caluObj.text = this.total
         let h = this.total / 3 * 88
@@ -788,7 +857,7 @@ export default {
         gift.width = 98
         gift.height = 88
         gift.x = this.boxList[n].x;
-        console.log(gift.x)
+        gift.parentGroup = this.group3
         const tween = PIXI.tweenManager.createTween(gift)
         tween.from({y: 0}).to({y: this.boxList[n].y - 8})
         tween.easing = PIXI.tween.Easing.outBounce()
@@ -827,6 +896,13 @@ export default {
     },
     winSuccess (a) {
       let successContainer = new PIXI.Container(), that = this, giftList = [], tweenList = []
+      let endInt
+      successContainer.interactive = true
+      successContainer.on('pointerdown', () => {
+        clearInterval(endInt)
+        this.linkAppStore()
+      })
+
       this.app1.stage.addChild(successContainer)
       that.status = {
         flag: 3,
@@ -846,18 +922,22 @@ export default {
       lightBg.x = this.app1.screen.width / 2
       lightBg.y = this.isLandscape ? this.app1.screen.height / 2 : this.app1.screen.height / 2 - 20
       successContainer.addChild(lightBg)
-
-      this.app1.ticker.add(delta => {
-        lightBg.rotation += 0.01
-      })
-      let plane = new PIXI.Sprite.fromImage(CONFIG.planeList[0])
-      plane.anchor.set(0.5, 0.5)
-      plane.width = 168
-      plane.height = 120
-      plane.x = lightBg.x
-      plane.y = lightBg.y
-      plane.interactive = true
-      successContainer.addChild(plane)
+      
+      const lightBg_tween = PIXI.tweenManager.createTween(lightBg)
+      lightBg_tween.from({rotation:0})
+      lightBg_tween.to({rotation:2 * Math.PI})
+      lightBg_tween.time = 3000
+      lightBg_tween.loop = true
+      lightBg_tween.start()
+    
+      // let plane = new PIXI.Sprite.fromImage(CONFIG.planeList[0])
+      // plane.anchor.set(0.5, 0.5)
+      // plane.width = 168
+      // plane.height = 120
+      // plane.x = lightBg.x
+      // plane.y = lightBg.y
+      // plane.interactive = true
+      // successContainer.addChild(plane)
 
       // 盒子先出来，logo出来，底部黑字和按钮出来
       let arr = [
@@ -895,23 +975,12 @@ export default {
       tween_logo.from({y: - bigLogo.height / 2}).to({y: this.isLandscape ? lightBg.y / 2 + 20: lightBg.y / 2 + bigLogo.height / 2})
       tween_logo.time = 1600
       tween_logo.easing = PIXI.tween.Easing.inBounce()
-
-
-      let bigPlane = new PIXI.Sprite.fromImage(CONFIG.planeList[a - 1])
-      bigPlane.anchor.set(0.5, 0.5)
-      bigPlane.width = 168
-      bigPlane.height = 120
-      bigPlane.x = lightBg.x
-      bigPlane.y = lightBg.y
-      bigPlane.interactive = true
-
-
       tween_logo.start()
       tween_logo.on('end', () => {
         // 黑字  按钮
         let blackTxt = new PIXI.Text('MERGE,PLANE,AND DEVELOP\nYOUR OWN TEAM!', {
           fontFamily: 'NumFont',
-          fontSize: this.isLandscape  ? 32 : 22,
+          fontSize: this.isLandscape  ? 32 : 26,
           align: 'center',
           fill: 'black',
           lineHeight: 40,
@@ -921,48 +990,76 @@ export default {
         })
         blackTxt.anchor.set(0.5)
         blackTxt.x = this.app1.screen.width / 2
-        blackTxt.y = this.isLandscape ? lightBg.y + 86 : bigPlane.y + 160,
+        blackTxt.y = this.isLandscape ? lightBg.y + 86 : lightBg.y + 160,
         successContainer.addChild(blackTxt)
         // 按钮
         this.installBtn({
-          url: CONFIG.downBtn,
-          width: this.isLandscape ? 138 : 180,
-          height: this.isLandscape ? 60 : 78,
+          url: CONFIG.continueBtn,
+          width: this.isLandscape ? 138 : 252,
+          height: this.isLandscape ? 60 : 133,
           y: this.isLandscape ? this.app1.screen.height - 40 : this.app1.screen.height - 140,
           parentCont: successContainer
         }).on('pointerdown', () => {
           this.linkAppStore()
         })
+        let shiningBtn = this.installBtn({
+          url: CONFIG.shineContinueBtn,
+          width: this.isLandscape ? 138 : 252,
+          height: this.isLandscape ? 60 : 133,
+          y: this.isLandscape ? this.app1.screen.height - 40 : this.app1.screen.height - 140,
+          parentCont: successContainer
+        })
+        shiningBtn.alpha = 0
+        const shine_tween2 = PIXI.tweenManager.createTween(shiningBtn)
+        shine_tween2.time = 2000
+        shine_tween2.pingPong = true
+        shine_tween2.loop = true
+        shine_tween2.from({
+          alpha: 0
+        })
+        shine_tween2.to({
+          alpha: 1
+        })
+        shine_tween2.easing = PIXI.tween.Easing.linear()
+        shine_tween2.start()
       })
 
-      const tween_1 = PIXI.tweenManager.createTween(plane)
-      const tween_2 = PIXI.tweenManager.createTween(bigPlane)
-      tween_1.time = 500
-      tween_1.easing = PIXI.tween.Easing.inCubic()
-      tween_1.pingPong = true
-      tween_1.loop = false
+      // const tween_1 = PIXI.tweenManager.createTween(plane)
+      // tween_1.time = 400
+      // tween_1.easing = PIXI.tween.Easing.linear()
+      // tween_1.loop = false
+      // tween_1.from({scale: {x: 0.4, y: 0.4}})
+      // tween_1.to({scale: {x: 0, y: 0}})
 
-      tween_2.time = 1200
-      tween_2.easing = PIXI.tween.Easing.linear()
+      let timeList = []
+      let planeArr = []
       
-      tween_1.from({scale: {x: 0.4, y: 0.4}})
-      tween_1.to({scale: {x: 0, y: 0}})
-      tween_1.on('end', () => {
-        PIXI.tweenManager.removeTween(tween_1)
-        successContainer.removeChild(plane)
+      let bigPlane = new PIXI.Sprite.fromImage(CONFIG.successPlane[0])
+        bigPlane.anchor.set(0.5, 0.5)
         successContainer.addChild(bigPlane)
-        tween_2.start()
+        bigPlane.width = 168
+        bigPlane.height = 120
+        bigPlane.x = lightBg.x
+        bigPlane.y = lightBg.y
+        bigPlane.scale.set(0);
+      for (let i = 0; i < 5; i++) {
+        planeArr.push(PIXI.Texture.fromImage(CONFIG.successPlane[i]))
+      }
+      let startScale = 0.5, endScale = 0,time = 1500,pingPong = true;
+      let textureIdx = 0;
+      const tween_2 = PIXI.tweenManager.createTween(bigPlane)
+      tween_2.time = time;
+      tween_2.easing = PIXI.tween.Easing.outCubic()
+      tween_2.from({scale: {x: startScale, y: startScale}})
+      tween_2.to({scale: {x: endScale, y: endScale}})
+      tween_2.loop = true
+      tween_2.pingPong= true;
+      tween_2.start()
+      tween_2.on('pingpong',()=>{
+        textureIdx += 1;
+        bigPlane.scale.set(startScale);
+        bigPlane.texture = planeArr[textureIdx%5]   // 改变texture相当于改变图片的src
       })
-
-      tween_2.from({scale: {x: 0.1, y: 0.1}})
-      tween_2.to({scale: {x: 0.4, y: 0.4}})
-      tween_2.loop = false
-  
-      
-      tween_logo.chain(tween_1)
-      // this.app1.ticker.add(delta => {
-      //   PIXI.tweenManager.update()
-      // })
     },
      /**
      * 粒子动画
@@ -999,10 +1096,10 @@ export default {
         url = this.androidLink;
       }
       try {
-        dapi.openStoreUrl();
-        console.log('dapi open store')
-        // mraid.open(url);
-        // console.log('mraid open store')
+        // dapi.openStoreUrl();
+        // console.log('dapi open store')
+        mraid.open(url);          // ad平台【AdColony Applovin Vungle】
+        console.log('mraid open store')
       } catch (err) {
         console.error(err);
         window.location = url;
