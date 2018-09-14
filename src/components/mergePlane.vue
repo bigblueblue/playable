@@ -169,7 +169,7 @@ export default {
       this.app1.stage.group.enableSort = true
       this.group1 = new PIXI.display.Group(2, true) 
       this.group2 = new PIXI.display.Group(2, true) // 飞机层
-      this.group3 = new PIXI.display.Group(3, true) //合成成功层
+      this.group3 = new PIXI.display.Group(3, true) //手指示层
       this.group4 = new PIXI.display.Group(4, true) //合成成功层
       this.app1.stage.addChild(new PIXI.display.Layer(this.group1))
       this.app1.stage.addChild(new PIXI.display.Layer(this.group2))
@@ -190,9 +190,9 @@ export default {
         y: this.isLandscape ? this.app1.screen.height - 40: this.app1.screen.height - 116,
         parentCont: this.app1.stage
       })
-      this.downBtn.on('pointerdown', () => {
-        this.linkAppStore()
-      })
+      // this.downBtn.on('pointerdown', () => {
+      //   this.linkAppStore()
+      // })
       this.shiningBtn = this.installBtn({
         url: CONFIG.shiningBtn,
         width: 212,
@@ -216,6 +216,9 @@ export default {
         console.log('i`m shining')
       })
       shine_tween.start()
+      this.shiningBtn.on('pointerdown', () => {
+        this.linkAppStore()
+      })
       logoSprite = new PIXI.Sprite.fromImage(CONFIG.logo)
       logoSprite.width = this.isLandscape ? 350 : 210
       logoSprite.height = this.isLandscape ? 60 : 34
@@ -341,7 +344,7 @@ export default {
         this.handSprite.y = this.boxList[1].y + 30
         this.handSprite.x = this.boxList[1].x + this.boxList[1].width / 2 - 8
         this.app1.stage.addChild(this.handSprite)
-        this.handSprite.parentGroup = this.group4
+        this.handSprite.parentGroup = this.group3
         this.tween1 = PIXI.tweenManager.createTween(this.handSprite)
         this.tween1.from({x: this.boxList[1].x + this.boxList[1].width / 2 - 8}).to({x: this.boxList[2].x + 10})
         this.tween1.time = 3000
@@ -724,7 +727,7 @@ export default {
       title.x = this.app1.screen.width / 2
       title.y = this.isLandscape ? 100 : this.boxList[0].y
       resultContainer.addChild(title)
-      title.parentGroup = this.group3
+      title.parentGroup = this.group4
 
       let lightBg = new PIXI.Sprite.fromImage(CONFIG.resultLight)
       lightBg.width = 400
@@ -946,7 +949,7 @@ export default {
       bgSprite.width = this.app1.screen.width
       bgSprite.height = this.app1.screen.height
       successContainer.addChild(bgSprite)
-      successContainer.parentGroup = this.group3
+      successContainer.parentGroup = this.group4
       let lightBg = new PIXI.Sprite.fromImage(CONFIG.successLight)
       lightBg.width = 414
       lightBg.height = 455
@@ -1152,7 +1155,7 @@ export default {
       obj.sprite.y = this.boxList[1].y + 30
       obj.sprite.x = this.boxList[1].x + this.boxList[1].width / 2 - 8
       this.app1.stage.addChild(obj.sprite)
-      obj.sprite.parentGroup = this.group4
+      obj.sprite.parentGroup = this.group3
 
       obj.tween = PIXI.tweenManager.createTween(obj.sprite)
       obj.sprite.y = y //this.boxList[5].y + this.boxList[5].height / 2 - 20

@@ -13,8 +13,7 @@ export default{
   data () {
     return {
       isLandscape: false,
-      step: 1,
-      time1: null
+      step: 1
     }
   },
   mounted () {
@@ -26,8 +25,9 @@ export default{
       const canvasH = this.isLandscape ? 414 : 736
       const outRadius = 180 // 转盘外半径
       const inRadius = 124 // 转盘内半径
+      const rotationTime = 3000 // 转盘时间
       const spinCopies = 6
-      let app, canvas, that = this, startDegrees = 0, lightDegrees = -180
+      let app, canvas, that = this, startDegrees = -180, lightDegrees = -180
       app = new PIXI.Application(canvasW, canvasH)
       document.getElementById('mergePlane').appendChild(app.view)
       canvas = document.querySelector('#mergePlane canvas')
@@ -39,16 +39,15 @@ export default{
       
       app.stage = new PIXI.display.Stage()
       app.stage.group.enableSort = true
-    
-      let group1, group2, group3
-      group1 = new PIXI.display.Group(1, true) 
-      group2 = new PIXI.display.Group(2, true) // 飞机层
-      group3 = new PIXI.display.Group(2, true) // 手指示
+
+      let group1, group2
+      group1 = new PIXI.display.Group(2, true) 
+      group2 = new PIXI.display.Group(3, true) // 飞机层
       app.stage.addChild(new PIXI.display.Layer(group1))
       app.stage.addChild(new PIXI.display.Layer(group2))
-      app.stage.addChild(new PIXI.display.Layer(group3))
+
       let pivotSprite, circleBg, lightArr1 = [], lightArr2 = [], outCircleBg, prizeList = []
-      let startIndex = 0, rounds, degrees, prize, rotationTime, isBegin = false, currentIndex
+      let startIndex = 0, rounds, degrees, prize, isBegin = false
       // 背景等静态图片
       let bgSprite = new PIXI.Sprite.fromImage(configMarqee.bgUrl)
       bgSprite.x = 0
@@ -103,7 +102,7 @@ export default{
       // 手指示
       let handObj = this.createHandTween(8, 30, marqeeContainer)
       handObj.tween.start()
-      let degreeArr = [0, 60, 120, 180, 240, 300]
+
       // prize奖品
       for (let i = 0; i < spinCopies; i++) {
         let prize = new PIXI.Sprite.fromImage(configMarqee.marqeePlane[i])
@@ -117,7 +116,7 @@ export default{
         }
         prize.x = Math.sin(this.d2a(startDegrees + i * 360 / 6)) * (inRadius - 32)
         prize.y = Math.cos(this.d2a(startDegrees + i * 360 / 6)) * (inRadius - 32)
-        // prize.rotation = startDegrees + 360 / 6 / 2 - 90
+        prize.rotation = startDegrees + 360 / 6 / 2 - 90;
         prizeList.push(prize)
       }
       let redCont = new PIXI.Container()  // 红光
@@ -132,43 +131,31 @@ export default{
         rLight.anchor.set(0.5, 0.5)
         rLight.width = 12
         rLight.height = 12
-        rLight.x = Math.sin(this.d2a(m * 360 / 24)) * (outRadius - 38)
-        if (m > 12) {
-          rLight.y = -Math.cos(this.d2a(m * 360 / 24)) * (outRadius - 38)
-        } else {
-          rLight.y = Math.cos(this.d2a(m * 360 / 24)) * (outRadius - 38)
-        }
+        rLight.x = Math.sin(this.d2a(lightDegrees + m * 360 / 24)) * (outRadius - 38)
+        // if (m > 12) {
+        //   rLight.y = -Math.cos(this.d2a(m * 360 / 24)) * (outRadius - 38)
+        // } else {
+          rLight.y = Math.cos(this.d2a(lightDegrees + m * 360 / 24)) * (outRadius - 38)
+        //}
+        
         redCont.addChild(rLight)
         lightArr1.push(rLight)
       }
   
 
       const circle_tween = PIXI.tweenManager.createTween(circleBg)
-      let time2
       pivotSprite.on('pointerdown', () => { // 开始
-        if (that.time1) {
-          return
-        }
         rounds = this.getRandomNum(2, 4)  // 圈数
-        rotationTime = this.getRandomNum(1000, 4000)
-        degrees = degreeArr[Math.floor(Math.random() * 6)] // 角度
-        let prizeDegree = 0
-        for(let i = 0; i < 6; i++){
-          let degreeTemp = degrees
-            prizeDegree += 60
-            if(prizeDegree > degreeTemp){
-                currentIndex = i
-                break
-            }
-        }
-        console.log(degrees, currentIndex)
-        getStart(circle_tween, rounds, degrees, rotationTime)
-        isBegin = true
+        degrees = this.getRandomNum(0, 360) // 角度
+        prize = spinCopies - 1 - Math.floor(degrees / (360 / spinCopies)) // 奖品
+        console.log(prize)
+        getStart(circle_tween, rounds, degrees)
+        // isBegin = true
       })
 
 
-      function getStart (tw, rounds, degrees, rotationTime) {
-        tw.from({rotation: 0}).to({rotation: that.d2a(360 * rounds + degrees)})
+      function getStart (tw, rounds, degrees, prize) {
+        tw.from({rotation: 0}).to({rotation: 360 * rounds + degrees})
         tw.easing = PIXI.tween.Easing.outCubic()
         tw.time = rotationTime
         tw.on('start', () => {
@@ -209,14 +196,10 @@ export default{
                 tw.start()
               } 
             }
-            console.table(prizeList)
-            if (currentIndex == 2) {
-              return
-            } else {
-              that.time1 = new Date().getTime()
-            }
             showScene2()
-          }, 2000)
+          }, 1000)
+          
+          
         })
         tw.start()
       }
@@ -244,35 +227,7 @@ export default{
 
       //场景二
       function showScene2 () {
-        console.table(prizeList)
-        console.log(marqeeContainer.x , marqeeContainer.y)
-
-        let tempX = prizeList[3].x, tempY = prizeList[3].y + 6
-        let trueIndex = currentIndex
-        currentIndex = currentIndex >= 3 ? currentIndex - 3 : currentIndex + 3
-        let goodSprite = new PIXI.Sprite.fromImage(configMarqee.marqeePlane[currentIndex])
-        goodSprite.anchor.set(0.5)
-        goodSprite.width = prizeList[currentIndex].width
-        goodSprite.height = prizeList[currentIndex].height
-        goodSprite.x = tempX
-        goodSprite.y = tempY
-        goodSprite.rotation = that.d2a(degrees)
-        goodSprite.parentGroup = group2
-        marqeeContainer.addChild(goodSprite)
-        console.log(tempX, tempY)
-        // goodSprite.x = 0
-        // goodSprite.y = -92
-        const plane_tween = PIXI.tweenManager.createTween(goodSprite)
-        plane_tween.from({y: tempY}).to({y: tempY + 30})
-        plane_tween.easing = PIXI.tween.Easing.inOutBack()
-        plane_tween.time = 800
-        plane_tween.pingPong = true
-        
-        const plane_tween2 = PIXI.tweenManager.createTween(goodSprite)
-        plane_tween2.from({scale: {x: 1, y: 1}}).to({scale: {x: 0.4, y: 0.4}})
-        plane_tween2.easing = PIXI.tween.Easing.linear()
-        plane_tween2.time = 500
-        
+        prizeList[prize].parentGroup = group2
         let bgSprite2 = new PIXI.Sprite.fromImage(configMarqee.bgUrl)
         bgSprite2.x = 0
         bgSprite2.y = 0
@@ -281,44 +236,16 @@ export default{
         app.stage.addChild(bgSprite2)
         const bg_tween = PIXI.tweenManager.createTween(bgSprite2)
         bg_tween.from({alpha: 0}).to({alpha: 1})
-        bg_tween.time = 3000
+        bg_tween.time = 5000
         bg_tween.easing = PIXI.tween.Easing.linear()
+        let tempY = prizeList[prize].y
+        const plane_tween = PIXI.tweenManager.createTween(prizeList[prize])
+        PIXI.tweenManager.getTweensForTarget(bg_tween)
+        plane_tween.from({y: tempY}).to({y: tempY - 20})
         bg_tween.start()
-        bg_tween.chain(plane_tween).chain(plane_tween2)
-
-        let sceneContainer = new PIXI.Container()
-        sceneContainer.x = canvasW / 2
-        sceneContainer.y = canvasH / 2
-        // sceneContainer.pivot.x = sceneContainer.width / 2
-        // sceneContainer.pivot.y = sceneContainer.height / 2
-        app.stage.addChild(sceneContainer)
-        //绘制跑道
-        plane_tween2.on('end', () => {
-          let track = new PIXI.Sprite.fromImage(configMarqee.trackUrl)
-          track.anchor.set(0.5)
-          track.width = 350
-          track.height = 640
-          sceneContainer.addChild(track)
-          console.log(track)
-
-          let keySprite = new PIXI.Sprite.fromImage(configMarqee.keyUrl)
-          keySprite.anchor.set(1, 0.5)
-          keySprite.width = 36
-          keySprite.height = 36
-          keySprite.x = track.width / 2 + 22
-          track.addChild(keySprite)
-          let handObj2 = that.createHandTween(0, tempY + 50, sceneContainer)
-          handObj2.sprite.parentGroup = group3
-          handObj2.sprite.scale.set(0.8)
-          console.log(goodSprite.x, goodSprite.y)
-          console.log(handObj2.sprite.x, handObj2.sprite.y)
-          handObj2.tween.from({scale: {x: 0.8,y: 0.8}}).to({scale: {x: 1,y: 1}})
-          handObj2.tween.start()
-        })
-        
       }
     },
-    d2a(n) { //度数转弧数
+    d2a(n) {
       return n * Math.PI / 180;
     },
     createHandTween (x, y, parentCont) { // 创建手
