@@ -554,7 +554,7 @@ export default {
             that.$set(that.boxList[onMoveing],'occupied',false);
             that.$set(that.boxList[onMoveing], 'rank', 0)
             clearInterval(that.clearTime)
-            that.spillAction(100, 100, that.boxList[curIndex].x, that.boxList[curIndex].y, [CONFIG.circleUrl, CONFIG.starUrl], CONFIG.composeEmitterConfig)
+            that.spillAction(100, 100, that.boxList[curIndex].x, that.boxList[curIndex].y, [CONFIG.circleUrl, CONFIG.starUrl], CONFIG.lightEmitterConfig)
             if (rk + 1 == 4) { // 最高级
               that.grade = rk + 1
               that.winSuccess(that.grade)
