@@ -419,12 +419,13 @@ export default{
         const plane_tween = PIXI.tweenManager.createTween(goodSprite)
         plane_tween.from({y: tempY, scale: {x: 0.22, y: 0.22}}).to({y: tempY - (that.isLandscape ? 40 : 90), scale: {x: 0.48, y: 0.48}})
         plane_tween.easing = PIXI.tween.Easing.linear()
-        plane_tween.time = 200
+        plane_tween.time = 300
 
         const plane_tween2 = PIXI.tweenManager.createTween(goodSprite)
         plane_tween2.from({y: tempY - (that.isLandscape ? 60 : 90)}).to({y: tempY})
         plane_tween2.easing = PIXI.tween.Easing.inOutBack()
-        plane_tween2.time = 300
+        //plane_tween2.delay = 200
+        plane_tween2.time = 400
         
         let bgSprite2 = new PIXI.Sprite.fromImage(that.isLandscape ? configMarqee.bgUrl2 : configMarqee.bgUrl)
         bgSprite2.x = 0
