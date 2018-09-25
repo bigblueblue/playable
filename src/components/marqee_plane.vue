@@ -247,7 +247,7 @@ export default{
           that.firstGuid = false
         }
         rounds = this.getRandomNum(3, 4)  // 圈数
-        rotationTime = this.getRandomNum(1200, 2000)
+        rotationTime = this.getRandomNum(1200, 1500)
         let n = Math.floor(Math.random() * 6)
         currentIndex = indexArr[n]
         degrees = degreeArr[n] // 角度
@@ -425,7 +425,7 @@ export default{
         plane_tween2.from({y: tempY - (that.isLandscape ? 60 : 90)}).to({y: tempY})
         plane_tween2.easing = PIXI.tween.Easing.inOutBack()
         //plane_tween2.delay = 200
-        plane_tween2.time = 400
+        plane_tween2.time = 500
         
         let bgSprite2 = new PIXI.Sprite.fromImage(that.isLandscape ? configMarqee.bgUrl2 : configMarqee.bgUrl)
         bgSprite2.x = 0
@@ -568,7 +568,7 @@ export default{
         slotList[0].rank = that.rank
         slotList[0].occpuied = true
         const plane_tween3 = PIXI.tweenManager.createTween(goodSprite)
-        plane_tween3.time = 300
+        plane_tween3.time = 400
         plane_tween3.easing = PIXI.tween.Easing.inOutBack()
         plane_tween3.from({scale: {x: 0.4, y: 0.4}, x: tempX, y: tempY})
         plane_tween3.to({scale: {x: 0.26, y: 0.26}, x: slotList[0].x, y: slotList[0].y})
