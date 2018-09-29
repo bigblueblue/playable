@@ -49,8 +49,8 @@ export default{
       coinSpriteObj: '',
       handFlag: true,
       isBegin: true,
-      isBeginScrape: false,
-      brush1: '',
+      isEnd: false,
+      isDrop: false,
       isRunList: new Array(4).fill(false)
     }
   },
@@ -289,7 +289,7 @@ export default{
                 console.log('我该动了')
                 const tw = PIXI.tweenManager.createTween(containerArr[index])
                 tw.from({x: -9}).to({x: 198 - containerArr[index].width}) //endPosX +
-                tw.time = 800
+                tw.time = 600
                 tw.easing = PIXI.tween.Easing.linear()
                 tw.start()
                 tw.on('start', () => {
@@ -310,7 +310,6 @@ export default{
           function pointerDown (event) {
             dragging = true
             if (that.isBegin) {
-              clearInterval(temp_inter)
               bgSprite.removeChild(handObj_move.sprite)
               bgSprite.removeChild(brush1)
               that.isBegin = !that.isBegin
@@ -336,68 +335,91 @@ export default{
             }
             fillPercent =  Number((count / total) * 100)
             // console.log('百分比：', fillPercent, isRun)
+            if (that.isEnd) {return}
             if (!isRun.length && fillPercent <= 67) { // 刮到90%
-              console.log('我该前进了')
+            console.log('judgeIsFull')
+              that.isEnd = true
+              // console.log('我该前进了')
               that.isFull = true
               scratchContainer.removeChild(renderTextureSprite)
               scratchSprite.mask = null
-              containerArr.forEach((item, index) => {
-                let len = item.children.length
-                let m = 0
-                let inter = setInterval(() => {
-                  // console.log(item.children.length)
-                  if (!item.children.length) {
+              containerArr.forEach(item => {
+                item.count = 0
+              })
+              let flag = false
+              for (let index = 0;index < containerArr.length; index++) {
+                let item = containerArr[index]
+                let realLen = that.circleArr[index]
+                console.log('realLen',realLen)
+                let inter = null
+                clearInterval(inter);
+                inter= setInterval(() => {
+                  let len = item.children.length
+                  if (len <= 0) { // 删完了
+                    console.log('0 clearInterval',inter)
                     clearInterval(inter)
                     return
-                  }
-                  let gPos = item.children[item.children.length - 1].getGlobalPosition()
-                  m++
-                  item.x += 18
-                  spillAction(10, 10, gPos.x - 36, gPos.y, [CONFIG.circleUrl], CONFIG.lightEmitterConfig)
-                  item.removeChildAt(item.children.length - 1)
-                  roundBoxArr[index].children[0].text -= 1
-                  if (len <= that.list[index]) {
-                    if (m == len) {
-                      clearInterval(inter)
-                    } else if (m == that.list[index]){
-                      clearInterval(inter)
-                    }
                   } else {
-                    if (m == that.list[index]){
-                      clearInterval(inter)
-                      scratchSprite.removeChild(roundBoxArr[that.prizeInd])
-                      const circleGroup_tw = PIXI.tweenManager.createTween(containerArr[that.prizeInd])
-                      let y1 = containerArr[that.prizeInd].y
-                      circleGroup_tw.from({y: y1}).to({y: y1 + 10})
-                      circleGroup_tw.pingPong = true
-                      circleGroup_tw.repeat = 3
-                      circleGroup_tw.time = 600
-                      circleGroup_tw.easing = PIXI.tween.Easing.linear()
-                      circleGroup_tw.start()
-                      const coin_tw = PIXI.tweenManager.createTween(coinArr[that.prizeInd])
-                      coin_tw.pingPong = true
-                      coin_tw.from({scale: {x: 0.5, y: 0.5}}).to({scale: {x: 0.7, y: 0.7}})
-                      coin_tw.time = 600
-                      coin_tw.repeat = 3
-                      coin_tw.easing = PIXI.tween.Easing.linear()
-                      circleGroup_tw.start()
-                      circleGroup_tw.chain(coin_tw)
-                      coin_tw.start()
-                      coin_tw.on('end', () => {
-                        if (that.total == 1) {
-                          that.total--
-                          that.coin += that.giftList[that.prizeInd].num
-                          showScence()
-                        } else {
-                          creatGift()
+                    let gPos = item.children[len - 1].getGlobalPosition()
+                    if (index != that.prizeInd) {//未中奖
+                      item.x += 18
+                      spillAction(10, 10, gPos.x - 36, gPos.y, [CONFIG.circleUrl], CONFIG.lightEmitterConfig)
+                      item.removeChildAt(len - 1)
+                      if(realLen - len < that.list[index]){
+                        roundBoxArr[index].children[0].text -= 1
+                      }
+                    } else {//中奖
+                      if (len > 1)  {
+                        item.x += 18
+                        spillAction(10, 10, gPos.x - 36, gPos.y, [CONFIG.circleUrl], CONFIG.lightEmitterConfig)
+                        item.removeChildAt(len - 1)
+                        roundBoxArr[index].children[0].text -= 1
+                      }
+                      if (len == 1){ //5 4 3 2 1 //1 2 3 4
+                        console.log('2 clearInterval',inter,roundBoxArr[index].children[0].text)
+                        clearInterval(inter)
+                        if (!flag) {
+                          scrachEnd()
+                          flag = true
                         }
-                      })
+                      }
                     }
                   }
                 }, 250)
-              })
+                console.log(inter)
+              }
+              that.isEnd = false
               return
             }
+          }
+          function scrachEnd () {
+            scratchSprite.removeChild(roundBoxArr[that.prizeInd])
+            const circleGroup_tw = PIXI.tweenManager.createTween(containerArr[that.prizeInd])
+            let y1 = containerArr[that.prizeInd].y
+            circleGroup_tw.from({y: y1}).to({y: y1 + 10})
+            circleGroup_tw.pingPong = true
+            circleGroup_tw.repeat = 3
+            circleGroup_tw.time = 600
+            circleGroup_tw.easing = PIXI.tween.Easing.linear()
+            circleGroup_tw.start()
+            const coin_tw = PIXI.tweenManager.createTween(coinArr[that.prizeInd])
+            coin_tw.pingPong = true
+            coin_tw.from({scale: {x: 0.5, y: 0.5}}).to({scale: {x: 0.7, y: 0.7}})
+            coin_tw.time = 600
+            coin_tw.repeat = 3
+            coin_tw.easing = PIXI.tween.Easing.linear()
+            circleGroup_tw.start()
+            circleGroup_tw.chain(coin_tw)
+            coin_tw.start()
+            coin_tw.on('end', () => {
+              if (that.total == 1) {
+                that.total--
+                that.coin += that.giftList[that.prizeInd].num
+                showScence()
+              } else {
+                creatGift()
+              }
+            })
           }
           function guidScrach () {
             let shadow2 = new PIXI.Sprite(texture)
@@ -453,10 +475,12 @@ export default{
           }
         }
         function creatGift () {
+          if (that.isDrop) {return}
           let bg = new PIXI.Graphics()
           bg.beginFill(0x000000, 0.85)
           bg.drawRect(0, 0, canvasW, canvasH)
           bg.endFill()
+          that.isDrop = true
           app.stage.addChild(bg)
           let gift = new PIXI.Sprite.fromImage(CONFIG.giftUrl)
           gift.anchor.set(0.5)
@@ -508,6 +532,7 @@ export default{
               that.isFull = false
               bgSprite.removeChild(scratchContainer)
               that.isBegin = true
+              that.isDrop = false
               that.list = []
               that.prizeInd = ''
               that.circleArr = []
@@ -683,6 +708,8 @@ export default{
       console.log('我是第几栏中奖:', this.prizeInd + 1)
       console.log('我是中奖个数：', this.list[this.prizeInd])
       this.circleArr = getColumn(this.list)
+      // this.prizeInd = 0
+      // this.circleArr = [11, 9, 10, 3, 9]
       // circleArr[[prizeInd]] = this.list[prizeInd] + 1
       this.$set(this.circleArr, this.prizeInd, this.list[this.prizeInd] + 1)
       console.log('我是具体每栏小球个数', this.circleArr)
