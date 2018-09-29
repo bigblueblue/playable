@@ -31,6 +31,7 @@ export default{
       durationTime: 3000,
       isPad: false,
       isVerPad: false,
+      isEnglish: false,
       status: 0 // 0 表示转盘 1 表示跑道 2表示到成功页面了
     }
   },
@@ -169,17 +170,19 @@ export default{
       marqeeContainer.x = canvasW / 2
       marqeeContainer.y = canvasH / 2
       app.stage.addChild(marqeeContainer)
-      let logo = new PIXI.Sprite.fromImage(configMarqee.logoUrl)
+      let logoObj = that.isEnglish ? configMarqee.logoUrl : configMarqee['logoUrl_cn']
+      let logo = new PIXI.Sprite.fromImage(logoObj)
       logo.anchor.set(0.5)
-      logo.width = 103
+      logo.width = that.isEnglish ? 103 : 123
       logo.height = 73
       logo.x = that.isLandscape ? -canvasW / 2 + 60 : 0
       logo.y = that.isLandscape ? canvasH / 2 - 70 : -canvasH / 2 + 95
       marqeeContainer.addChild(logo)
-      let downBtn = new PIXI.Sprite.fromImage(configMarqee.downBtnUrl)
+      let downObj = that.isEnglish ? configMarqee.downBtnUrl : configMarqee['downBtnUrl_cn']
+      let downBtn = new PIXI.Sprite.fromImage(downObj)
       downBtn.anchor.set(0.5)
-      downBtn.width = 150
-      downBtn.height = 65
+      downBtn.width = 150 
+      downBtn.height = that.isEnglish ? 65 : 45
       downBtn.x = that.isLandscape ? canvasW / 2 - 90 : 0
       downBtn.y = that.isLandscape ? canvasH / 2 - 65 : -canvasH / 2 + 176
       downBtn.interactive = true
@@ -221,12 +224,13 @@ export default{
       // prize奖品
       let  rotateDegrees = 120
       for (let i = 0; i < spinCopies; i++) {  // 顺时针方向 0
-        let prize = new PIXI.Sprite.fromImage(configMarqee.planeList[i])
+        let itemArr = that.isEnglish ? configMarqee.planeList : configMarqee['planeList_cn']
+        let prize = new PIXI.Sprite.fromImage(itemArr[i])
         prize.anchor.set(0.5)
         prize.scale.set(0.22)
         circleBg.addChild(prize)
         if (i == 0) {
-          prize.scale.set(1)
+          prize.scale.set(that.isEnglish ? 1 : 0.8)
        }
         prize.x = Math.cos(this.d2a(startDegrees + i * 60 + 30)) * (inRadius - 36)
         prize.y = Math.sin(this.d2a(startDegrees + i * 60 + 30)) * (inRadius - 36)
@@ -313,11 +317,11 @@ export default{
         getStart(circle_tween, rounds, degrees, rotationTime)
       })
 
-      marqeeContainer.visible = false
-      currentIndex = 4
-      that.rank = currentIndex
+      // marqeeContainer.visible = false
+      // currentIndex = 4
+      // that.rank = currentIndex
       // getSuccess()
-      getNewPlane()
+      // getNewPlane()
       function getStart (tw, rounds, degrees, rotationTime) {
         tw.from({rotation: 0}).to({rotation: that.d2a(360 * rounds + degrees)})
         tw.easing = PIXI.tween.Easing.outCubic()
@@ -505,17 +509,19 @@ export default{
         coinSprite.y = 10
         sceneContainer.addChild(coinSprite)
         //logo. btn
-        let logo = new PIXI.Sprite.fromImage(configMarqee.logoUrl)
+        let logoObj = that.isEnglish ? configMarqee.logoUrl : configMarqee['logoUrl_cn']
+        let logo = new PIXI.Sprite.fromImage(logoObj)
         logo.anchor.set(0, 1)
-        logo.width = 103
+        logo.width = that.isEnglish ? 103 : 123
         logo.height = 73
         logo.y = canvasH - 15
         logo.x = 10
         sceneContainer.addChild(logo)
-        let downBtn = new PIXI.Sprite.fromImage(configMarqee.downBtnUrl)
+        let downObj = that.isEnglish ? configMarqee.downBtnUrl : configMarqee['downBtnUrl_cn']
+        let downBtn = new PIXI.Sprite.fromImage(downObj)
+        downBtn.width = 150 
+        downBtn.height = that.isEnglish ? 65 : 45
         downBtn.anchor.set(1, 1)
-        downBtn.width = 150
-        downBtn.height = 65
         downBtn.y = canvasH - 10
         downBtn.x = canvasW - 10
         downBtn.interactive = true
@@ -1223,7 +1229,8 @@ export default{
         light_tween.time = 9000
         light_tween.easing = PIXI.tween.Easing.linear()
         light_tween.start()
-        let downBtn = new PIXI.Sprite.fromImage(configMarqee.playBtnUrl)
+        let playBtnObj = that.isEnglish ? configMarqee.playBtnUrl : configMarqee['playBtnUrl_cn']
+        let downBtn = new PIXI.Sprite.fromImage(playBtnObj)
         downBtn.anchor.set(0.5)
         downBtn.x = lightBg.x
         downBtn.y = that.isLandscape ? canvasH - 60 : canvasH - 200
