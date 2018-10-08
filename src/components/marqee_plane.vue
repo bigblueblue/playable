@@ -29,7 +29,8 @@ export default{
       planeList: [],
       isRun: false,
       durationTime: 3000,
-      isEnglish: false,
+      isEnglish: true, //false,
+      toggleFlag: true, // 切屏的时候step为3时
       status: 0 // 0 表示转盘 1 表示跑道 2表示到成功页面了
     }
   },
@@ -79,6 +80,7 @@ export default{
           clearInterval(that.cleartimer)
           that.firstGuid = true
           that.timer = null
+          that.toggleFlag = false
           that.initPIXI()
         } else if (that.status == 2) {
           that.initPIXI()
@@ -402,7 +404,6 @@ export default{
         goodSprite.anchor.set(0.5)
         let pos = prizeList[currentIndex].getGlobalPosition()
         app.stage.addChild(goodSprite)
-        // console.log(goodSprite)
         goodSprite.scale.set(0.2)
         goodSprite.x = pos.x
         goodSprite.y = pos.y
@@ -591,16 +592,17 @@ export default{
           if (that.step >= 2 && that.status == 1) {
             that.$set(that.slotList[i], 'x', x)
             that.$set(that.slotList[i], 'y', y)
-            slotList[i] = that.slotList[i]
-            slotContainer.addChild(slotSprite)
+            rank = that.slotList[i].rank
+            occpuied = that.slotList[i].occpuied
+            running = that.slotList[i].running
           } else {
             slotSprite.rank = rank
             slotSprite.occpuied = occpuied
             slotSprite.running = running
-            slotList.push({x, y, rank, occpuied, running})
             that.$set(that.slotList, i, {x, y, rank, occpuied, running})
-            slotContainer.addChild(slotSprite)
           }
+          slotList.push({x, y, rank, occpuied, running})
+          slotContainer.addChild(slotSprite)
         }
        
         
@@ -610,7 +612,7 @@ export default{
         plane_tween3.from({scale: {x: 0.4, y: 0.4}, x: tempX, y: tempY})
         plane_tween3.to({scale: {x: 0.26, y: 0.26}, x: slotList[0].x, y: slotList[0].y})
         if (that.status == 1 && !that.isMarquee) {
-          if (that.step == 1){
+          if (that.step == 1){ 
             goodSprite.scale.set(0.26)
             slotList[0].rank = that.rank
             slotList[0].occpuied = true
@@ -624,16 +626,17 @@ export default{
               dropGift(0, that.rank)
             }
             play(goodSprite)
-          } else if (that.step >= 2 && that.step < 6 && that.step != 3) {
+          } else if (that.step == 2) {
             createPlane(that.slotList[that.plane_location ? 0 : 1].rank, that.plane_location ? 0 : 1)
           } else if (that.step == 3) {
             that.total = -1
             that.isRun = true
             createPlane(that.slotList[that.plane_location ? 0 : 1].rank, that.plane_location ? 0 : 1)
+            that.toggleFlag = true
             that.isRun = false
             addMoney(that.plane_location ? 0 : 1, that.slotList[that.plane_location ? 0 : 1].rank)
             dropGift(that.plane_location, that.rank + 1)
-          } else if (that.step >= 6) { // 指示结束了， 几架飞机在跑道 几架在降落块上
+          } else if (that.step > 3) { // 指示结束了， 几架飞机在跑道 几架在降落块上
             planeList = that.planeList
             that.durationTime = 3000
             that.total = -1
@@ -654,10 +657,12 @@ export default{
                   dropGift(index, that.rank)
               }
             })
-            that.isRun = false
-            that.cleartimer = setInterval(() => {
-              dropGift('', that.rank)
-            }, 2800)
+            if (that.step >= 5) {
+              that.isRun = false
+              that.cleartimer = setInterval(() => {
+                dropGift('', that.rank)
+              }, 2800)
+            }
           } 
         } else {
           goodSprite.scale.set(0.26)
@@ -679,7 +684,7 @@ export default{
         
       }
       function dropGift (n, rank) {  // 掉箱子
-        console.log('掉箱子', n, rank)
+        // console.log('掉箱子', n, rank)
         let occpuiedArr = []
         if (typeof n != 'number'){
           slotList.forEach((item, index) => {
@@ -749,11 +754,9 @@ export default{
         plane.pName = Math.random().toString(36).substr(2)
         plane.pRank = r
         plane.pIndex = i
-        // plane.parentGroup = group3
         plane.x = slotList[i].x
         plane.y = slotList[i].y
         app.stage.addChild(plane)
-        // sceneContainer.addChild(plane)
         slotList[i].rank = r
         slotList[i].occpuied = true
         that.$set(that.slotList[i], 'rank', r)
@@ -762,9 +765,7 @@ export default{
         that.$set(that.planeList, i, plane)
         plane.interactive = true
         plane.buttonMode = true
-        if (that.step >= 6 && that.status == 1 && that.isRun) {
-          // console.log('红红火火')
-          // console.log(that.isRun)
+        if (that.step >= 5 && that.status == 1 && that.isRun) {
         } else if (!that.isRun){
           // console.log('零零落落')
           const plane_tween = PIXI.tweenManager.createTween(plane)
@@ -790,7 +791,7 @@ export default{
           handObj2.tween.pingPong = false
           handObj2.tween.easing = PIXI.tween.Easing.outQuad()
           handObj2.tween.start()
-        } else if (that.step == 3) {
+        } else if (that.step == 3 && that.toggleFlag) {
           let i = 1
           if (slotList[0].running) {
             i = 0
@@ -802,14 +803,16 @@ export default{
           }
           handObj2 = that.createHandTween(slotList[i].x + 10, slotList[i].y + 30, sceneContainer)
           handObj2.tween.start()
-        } else if (that.step == 5) {
+        } else if (that.step == 4) {
+          if (handObj2 && handObj2.sprite) {
+            return
+          }
           handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 20, sceneContainer)
           handObj2.sprite.parentGroup = group3
           handObj2.tween.from({x: slotList[1].x}).to({x: slotList[0].x})
           handObj2.tween.time = 1600
           handObj2.tween.start()
-        }
-        else if (that.step == 6) {
+        }else if (that.step == 5) {
           console.log('开始定时器啦',that.step)
           that.cleartimer = setInterval(() => {
             dropGift('', that.rank)
@@ -844,10 +847,12 @@ export default{
             let planeObj2 = planeList[moveI]
             let planeObj1 = planeList[endI]
             if (endRank == moveRank && !slotList[endI].running) { // 合成
-              if (that.step == 1 || that.step == 5) {
-                sceneContainer.removeChild(handObj2.sprite)
-                PIXI.tweenManager.removeTween(handObj2.tween)
-                handObj2 = {}
+              if (that.step == 1 || that.step == 5 || that.step == 4) {
+                if (handObj2 && handObj2.sprite) {
+                  sceneContainer.removeChild(handObj2.sprite)
+                  PIXI.tweenManager.removeTween(handObj2.tween)
+                  handObj2 = {}
+                }
                 that.step++
               }
               app.stage.removeChild(planeList[moveI])
@@ -940,6 +945,7 @@ export default{
               // 跑
               if (handObj2 && handObj2.sprite && !that.isFirst) {
                 sceneContainer.removeChild(handObj2.sprite)
+                that.step++
                 addMoney (moveI, moveRank)
                 if (slotList[1].running) {
                   dropGift(0, moveRank)
@@ -1022,9 +1028,6 @@ export default{
         moving_tween.loop = true
         moving_tween.start()
         moving_tween.on('start', () => {
-          if (that.step == 2) {
-            that.step++
-          }
           planeShadow.on('pointerdown', returnBack)
           function returnBack (event) {
             let amid = event.target.parent
@@ -1035,7 +1038,6 @@ export default{
               if (handObj2 && handObj2.sprite) {
                 sceneContainer.removeChild(handObj2.sprite)
                 handObj2 = {}
-                that.step++
               }
               let rIndex = runningPlanes.findIndex(v => {
                 return v.pIndex == ind
@@ -1077,7 +1079,10 @@ export default{
                 trackIconList[that.total].texture = emptyIcon
                 that.total--
                 repeatFlag = true
-                if (that.step == 4) {
+                if (that.step == 3) {
+                  if (handObj2 && handObj2.sprite) {
+                    return
+                  }
                   handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 20, sceneContainer)
                   handObj2.sprite.parentGroup = group3
                   handObj2.tween.from({x: slotList[1].x}).to({x: slotList[0].x})
