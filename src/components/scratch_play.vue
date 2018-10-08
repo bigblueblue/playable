@@ -14,8 +14,8 @@ export default{
   data () {
     return {
       isLandscape: false,
-      iosLink: 'https://itunes.apple.com/app/id1363863879',
-      androidLink: 'https://play.google.com/store/apps/details?id=com.brokenreality.planemerger.android',
+      iosLink: 'https://play.google.com/store/apps/details?id=com.darrofun.luckyscratch',
+      androidLink: 'https://play.google.com/store/apps/details?id=com.darrofun.luckyscratch',
       total: 3, // 玩几轮
       coin: 0,  // 金币总和
       giftList: [ // 每栏方块颜色跟金额
@@ -51,7 +51,9 @@ export default{
       isBegin: true,
       isEnd: false,
       isDrop: false,
-      isRunList: new Array(4).fill(false)
+      isRunList: new Array(4).fill(false),
+      status: null,
+      count: 0
     }
   },
   watch: {
@@ -82,6 +84,7 @@ export default{
     })
   },
   mounted () {
+    this.getSize()
     this.initPIXI()
   },
   methods: {
@@ -99,9 +102,19 @@ export default{
         } else {
           that.isLandscape = false
         }
-        let canvas = document.querySelector('#mergePlane canvas')
+        let canvas = document.querySelector('#scratchPlay canvas')
         canvas.parentNode.removeChild(canvas)
-        initPIXI()
+        if (that.status == 1) {
+          that.count = 0
+          that.isFull = false
+          that.isBegin = true
+          that.isEnd = false
+          that.handFlag = true
+          that.isRunList = new Array(4).fill(false)
+        } else if (that.status == 2) {
+          that.isDrop = false
+        }
+        that.initPIXI()
       }
     },
     initPIXI () {
@@ -144,7 +157,10 @@ export default{
         group2 = new PIXI.display.Group(2, true)
         app.stage.addChild(new PIXI.display.Layer(group1))
         app.stage.addChild(new PIXI.display.Layer(group2))
-        bgSprite = new PIXI.Sprite.fromImage(CONFIG.bgUrl)
+        let bgUrl = that.isLandscape ? CONFIG.bgUrl_ver :CONFIG.bgUrl
+        bgSprite = new PIXI.Sprite.fromImage(bgUrl)
+        bgSprite.x = 0
+        bgSprite.y = 0
         bgSprite.width = canvasW
         bgSprite.height = canvasH
         app.stage.addChild(bgSprite)
@@ -152,8 +168,13 @@ export default{
         for (let k = 0; k < 2; k++) {
           let handRail = new PIXI.Sprite(handRailArr[0])
           handRail.anchor.set(k, 0.5)
-          handRail.x = k ? canvasW : 0
-          handRail.y = 204
+          if (that.isLandscape) {
+            handRail.x = k ? canvasW / 2 - 10 : 0
+            handRail.y = 207
+          } else {
+            handRail.x = k ? canvasW : 0
+            handRail.y = 204
+          }
           handRail.width = 72
           handRail.height = 21
           bgSprite.addChild(handRail)
@@ -161,10 +182,18 @@ export default{
         }
         
   
-        // showScence()
+        // showScence2()
         // return
         drawImage(bgSprite)
         drawScratch()
+        if (that.status == 2) {
+          creatGift()
+        } else if (that.status == 3) {
+          showScence()
+        } else if (that.status == 4) {
+          showScence2()
+        }
+
 
         function drawScratch () {
           scratchContainer = new PIXI.Container()
@@ -174,8 +203,8 @@ export default{
           scratchContainer.addChild(scratchBox)
           scratchBox.width = 376
           scratchBox.height = 382
-          scratchBox.x = canvasW - (canvasW - scratchBox.width) / 2
-          scratchBox.y = canvasH - 90
+          scratchBox.x = that.isLandscape ? canvasW / 2 + 356 :canvasW - (canvasW - scratchBox.width) / 2
+          scratchBox.y = that.isLandscape ? canvasH - 20 :canvasH - 90
           let brush = new PIXI.Graphics()
           brush.beginFill(0xffffff)
           brush.drawCircle(0, 0, 40)
@@ -186,8 +215,8 @@ export default{
           maskSprite.anchor.set(1)
           maskSprite.width = 310
           maskSprite.height = 364
-          maskSprite.x = canvasW - (canvasW - 376) / 2 - 9
-          maskSprite.y = canvasH - 90 - 9
+          maskSprite.x = scratchBox.x - 9
+          maskSprite.y = scratchBox.y - 9
           scratchContainer.addChild(maskSprite)
 
           let scratchSprite = new PIXI.Sprite.fromImage(CONFIG.scratchContUrl)
@@ -195,10 +224,13 @@ export default{
           scratchContainer.addChild(scratchSprite)
           scratchSprite.width = 310
           scratchSprite.height = 364
-          scratchSprite.x = canvasW - (canvasW - 376) / 2 - 9 //canvasW - (canvasW - scratchSprite.width) / 2
-          scratchSprite.y = canvasH - 90 - 9
-          let renderTexture = PIXI.RenderTexture.create(500, 800)
+          scratchSprite.x = scratchBox.x - 9
+          scratchSprite.y = scratchBox.y - 9
+          // let renderTexture = PIXI.RenderTexture.create(that.isLandscape ? 900 :310, 364)
+          let renderTexture = PIXI.RenderTexture.create(that.isLandscape ? 900 : 500, 800)
           let renderTextureSprite = new PIXI.Sprite(renderTexture)
+          // renderTextureSprite.x = scratchBox.x - 9
+          // renderTextureSprite.y = scratchBox.y - 9
           scratchContainer.addChild(renderTextureSprite)
           scratchSprite.mask = renderTextureSprite
 
@@ -223,7 +255,7 @@ export default{
             })
             smcoinNum.anchor.set(0.5)
             smcoinNum.x = 0
-            smcoinNum.y = 60
+            smcoinNum.y = 50
             coinIcon.addChild(smcoinNum)
             coinArr.push(coinIcon)
             coinIcon.scale.set(0.5)
@@ -264,6 +296,7 @@ export default{
           scratchSprite.on('pointermove', pointerMove)
 
           if (that.isBegin) {
+            that.status = 1
             guidScrach()
           }
 
@@ -274,16 +307,18 @@ export default{
               brush.position.copy(event.data.global)
               app.renderer.render(brush, renderTexture, false, null, false)
               let brushPos = event.data.global
-              // console.log(brushPos.x)
-              if (brushPos.y < 250 || brushPos.y > 670) {
+              let maxY = that.isLandscape ? canvasH - 29 : 670, minY = that.isLandscape ? 28 : 250
+              let minX = that.isLandscape ? canvasW / 2 + 58 : 67, maxX = that.isLandscape ? canvasW - 29 :120
+              // console.log(brushPos.x, brushPos.y)
+              if (brushPos.y < minY || brushPos.y > maxY) {
                 return
               }
-              let index = parseInt((brushPos.y - 250) / smH)
+              let index = parseInt((brushPos.y - minY) / smH)
               // console.log(index)
               // console.log(brushPos.x, brushPos.y)
               index = index > 4 ? 4 : index
               if (that.isFull) {return}
-              if (brushPos.x >= 70 && brushPos.x <= 120) {  // 刮
+              if (brushPos.x >= minX && brushPos.x <= maxX) {  // 刮
                 if (containerArr[index].firstMove) {return}
                 console.log(`%c 我正在刮第${index}`, 'color: deeppink')
                 console.log('我该动了')
@@ -298,9 +333,11 @@ export default{
                 })
                 tw.on('end', () => {
                   console.log('我动完了')
-                  that.isRunList[index] = true
+                  // that.isRunList[index] = true
+                  that.$set(that.isRunList, index, true)
+                  // console.table(that.isRunList)
                   tw.remove()
-                  setTimeout(judgeIsFull, 200)
+                  setTimeout(judgeIsFull, 400)
                 })
               } else {
                 judgeIsFull()
@@ -322,7 +359,7 @@ export default{
           
           function judgeIsFull () {
             let isRun = []
-            that.isRunList.forEach(item => {
+            that.isRunList.forEach(item => { // false 表示动完了
               if (!item) {
                 isRun.push(item)
               }
@@ -334,10 +371,10 @@ export default{
               }
             }
             fillPercent =  Number((count / total) * 100)
-            // console.log('百分比：', fillPercent, isRun)
+            console.log('是否结束完', fillPercent)
             if (that.isEnd) {return}
-            if (!isRun.length && fillPercent <= 67) { // 刮到90%
-            console.log('judgeIsFull')
+            if (!isRun.length && fillPercent <= (that.isLandscape ? 82 : 67)) { // 刮到90%
+              console.log('judgeIsFull')
               that.isEnd = true
               // console.log('我该前进了')
               that.isFull = true
@@ -412,7 +449,7 @@ export default{
             circleGroup_tw.chain(coin_tw)
             coin_tw.start()
             coin_tw.on('end', () => {
-              if (that.total == 1) {
+              if (that.total <= 1) {
                 that.total--
                 that.coin += that.giftList[that.prizeInd].num
                 showScence()
@@ -432,10 +469,12 @@ export default{
             shadow2.x = canvasW - (canvasW - 376) / 2 - 9
             shadow2.y = canvasH - 90 - 9
             let firsStart = true
-            handObj_move = that.createHandTween(140, canvasH - 382 - 70, bgSprite)
+            let x1 = that.isLandscape ? canvasW / 2 + 80 : 140
+            let y1 = that.isLandscape ? canvasH - 200 : canvasH - 382 + 90
+            handObj_move = that.createHandTween(x1, canvasH - 382 - 70, bgSprite)
             handObj_move.sprite.scale.set(0.08)
             handObj_move.sprite.parentGroup = group2
-            handObj_move.tween.from({x: 140, y: canvasH - 382 + 90}).to({x: 340, y: canvasH - 382})
+            handObj_move.tween.from({x: x1, y: y1}).to({x: x1 + 200, y: y1 - 90})
             handObj_move.tween.time = 3200
             // handObj_move.tween.loop = false
             let startX = 100 //handObj_move.sprite.getGlobalPosition().x
@@ -475,6 +514,7 @@ export default{
           }
         }
         function creatGift () {
+          that.status = 2
           if (that.isDrop) {return}
           let bg = new PIXI.Graphics()
           bg.beginFill(0x000000, 0.85)
@@ -482,6 +522,7 @@ export default{
           bg.endFill()
           that.isDrop = true
           app.stage.addChild(bg)
+          bg.parentGroup = group2
           let gift = new PIXI.Sprite.fromImage(CONFIG.giftUrl)
           gift.anchor.set(0.5)
           gift.scale.set(0.9)
@@ -505,7 +546,7 @@ export default{
           gift_tween3.from({y: canvasH / 2 - 6}).to({y: canvasH / 2 - 6 - 10})
           gift_tween3.time = 300
           gift_tween3.repeat = 3
-          gift_tween3.easing = PIXI.tween.Easing.inBounce() 
+          gift_tween3.easing = PIXI.tween.Easing.inBounce()
           gift_tween3.pingPong = true
           gift_tween1.start()
           gift_tween1.chain(gift_tween2).chain(gift_tween3)
@@ -546,20 +587,20 @@ export default{
         }
         
       }
-      var count = 0
+      
       app.ticker.add(delta => {
         PIXI.tweenManager.update()
-        count += delta * 5
-        if (count > 100) {
+        that.count += delta * 5
+        if (that.count > 100) {
           handRailList.forEach(item => {
             item.texture = handRailArr[that.handFlag ? 0 : 1]
           })
           that.handFlag = !that.handFlag
-          count = 0
+          that.count = 0
         }
       })
       
-      function drawImage (bgSprite) {
+      function drawImage (bgSprite, isRight) {
         let ticketSprite = new PIXI.Sprite.fromImage(CONFIG.ticketUrl)
         ticketSprite.anchor.set(0.5)
         ticketSprite.width = 56
@@ -577,7 +618,11 @@ export default{
         that.ticketNumObj = ticketNum
         let coinNum = new PIXI.Text(that.coin, textStyle)
         coinNum.anchor.set(1, 0.5)
-        coinNum.x = canvasW - 10
+        if (isRight) {  // 最后一个页面横版金币在最右边
+          coinNum.x = canvasW - 10
+        } else {
+          coinNum.x = that.isLandscape ? canvasW / 2 - coinNum.width - 10 :canvasW - 10
+        }
         coinNum.y = ticketSprite.y
         bgSprite.addChild(coinNum)
         that.coinNumObj = coinNum
@@ -593,20 +638,25 @@ export default{
         that.coinSpriteObj = coinSprite
         let logoSprite = new PIXI.Sprite.fromImage(CONFIG.logoUrl)
         logoSprite.anchor.set(0, 0.5)
-        logoSprite.width = 170 
+        logoSprite.width = that.isLandscape ? 140 : 170 
         logoSprite.height = 32
         logoSprite.x = 10
-        logoSprite.y = canvasH - 38
+        logoSprite.y = that.isLandscape ? canvasH - 80 : canvasH - 38
         bgSprite.addChild(logoSprite)
-        that.drawBtn(bgSprite, 146, 40, canvasW - 10, canvasH - 38, CONFIG.btnUrl, '', true)
+        logoSprite.interactive = true
+        logoSprite.on('pointerdown', () => {
+          that.linkAppStore()
+        })
+        that.drawBtn(bgSprite, that.isLandscape ? 140 : 146, 40, that.isLandscape ? canvasW / 2 - 40 : canvasW - 10, logoSprite.y, CONFIG.btnUrl, '', true)
       }
       function showScence () {
+        that.status = 3
         bgRect = new PIXI.Graphics()
         bgRect.beginFill(0x282828, 0.8)
         bgRect.drawRect(0, 0, canvasW, canvasH)
         bgRect.endFill()
         app.stage.addChild(bgRect)
-        bgRect.parentGroup = group1
+        bgRect.parentGroup = group2
         let blRound = new PIXI.Sprite.fromImage(CONFIG.popBoxUrl)
         blRound.anchor.set(0.5)
         blRound.x = bgRect.width / 2
@@ -635,6 +685,7 @@ export default{
         }
       }
       function showScence2 () {
+        that.status = 4
         app.stage.removeChild(bgSprite)
         app.stage.removeChild(bgRect)
         let bgCon = new PIXI.Graphics()
@@ -643,15 +694,15 @@ export default{
         bgCon.endFill()
         bgCon.interactive = true
         app.stage.addChild(bgCon)
-        drawImage(bgCon)
+        drawImage(bgCon, true)
         let banner = new PIXI.Sprite.fromImage(CONFIG.bannerUrl)
-        banner.width = 404
+        banner.width = that.isLandscape ? canvasW / 2 - 30 : 404
         banner.height = 213
         banner.x = 5
         banner.y = 80
         bgCon.addChild(banner)
-        that.drawBtn(banner, 148, 38, banner.width - 30, banner.height - 70, CONFIG.buyBtnUrl)
-        let btnHandObj = that.createHandTween(banner.width - 10 - 148 / 2, banner.height - 40, banner)
+        that.drawBtn(banner, 148, 38, that.isLandscape ? banner.x + banner.width + 20 : banner.width - 30, banner.height - 70, CONFIG.buyBtnUrl)
+        let btnHandObj = that.createHandTween(that.isLandscape ? banner.x + banner.width + 20 : banner.width - 30, banner.height - 40, banner)
         btnHandObj.sprite.scale.set(0.06)
         btnHandObj.tween.from({scale: {x: 0.06,y: 0.06}})
         btnHandObj.tween.to({scale: {x: 0.07,y: 0.07}})
@@ -663,10 +714,10 @@ export default{
         }
         for (let n = 0; n < 9; n++) {
           let card =  new PIXI.Sprite(textArr[Math.floor(n / 3)])
-          card.width = 132
-          card.height = 92
-          card.x = (n % 3) * (132 + 6) + 3
-          card.y = Math.floor(n / 3) * 100 + banner.y + 250
+          card.width = that.isLandscape ? 120 : 132
+          card.height = that.isLandscape ? 77 :92
+          card.x = that.isLandscape ? (n % 3) * (card.width + 2) +  canvasW / 2 - 5 : (n % 3) * (132 + 6) + 3
+          card.y = that.isLandscape ? Math.floor(n / 3) * (card.height + 16) + 80 : Math.floor(n / 3) * 100 + banner.y + 250
           bgCon.addChild(card)
           let num = '$' + numArr[Math.floor(n / 3)]
           let money = new PIXI.Text(num, {
