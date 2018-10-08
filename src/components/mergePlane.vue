@@ -223,8 +223,13 @@ export default {
       })
       let logo = this.isEnglish ? CONFIG.logo : CONFIG['logo_ch']
       logoSprite = new PIXI.Sprite.fromImage(logo)
-      logoSprite.width = this.isLandscape ? 350 : 210
-      logoSprite.height = this.isLandscape ? 60 : 34
+      if (this.isEnglish) {
+        logoSprite.width = this.isLandscape ? 350 : 210
+        logoSprite.height = this.isLandscape ? 60 : 34
+      } else {
+        logoSprite.width = this.isLandscape ? 196 : 156
+        logoSprite.height = this.isLandscape ? 60 : 48
+      }
       logoSprite.x = (this.app1.screen.width - logoSprite.width) / 2
       logoSprite.y =  this.isLandscape ? 20 : this.logoH
       this.app1.stage.addChild(logoSprite)
@@ -980,7 +985,7 @@ export default {
         [{x: 0, y: this.app1.screen.height + 40}, {x: 120, y: this.app1.screen.height}],
         [{x: this.app1.screen.width + 200, y: this.app1.screen.height + 120}, {x: this.app1.screen.width, y: this.app1.screen.height}],
         [{x: this.app1.screen.width + 200, y: 0}, {x: this.app1.screen.width, y: this.app1.screen.height - 270}],
-        [{x: this.app1.screen.width, y: 0}, {x: this.app1.screen.width - 20, y: 200}],
+        [{x: this.app1.screen.width, y: 0}, {x: this.app1.screen.width, y: 300}],
         [{x: this.app1.screen.width + 200, y: -275}, {x: this.app1.screen.width - 100, y: 120}]
       ]
 
@@ -1006,8 +1011,8 @@ export default {
         bigLogo.width = this.isLandscape ? 138 : 226
         bigLogo.height = this.isLandscape ? 98 : 160
       } else {
-        bigLogo.width = this.isLandscape ? 138 : 260
-        bigLogo.height = this.isLandscape ? 98 : 80
+        bigLogo.width = this.isLandscape ? 260 : 260
+        bigLogo.height = this.isLandscape ? 80 : 80
       }
       successContainer.addChild(bigLogo)
       const tween_logo = PIXI.tweenManager.createTween(bigLogo)
