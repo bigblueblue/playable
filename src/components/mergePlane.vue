@@ -296,7 +296,7 @@ export default {
         this.hintSprite.height = this.isLandscape ? 100 : 126
         this.app1.stage.addChild(this.hintSprite)
         this.hintSprite.x = this.app1.screen.width / 2
-        this.hintSprite.y = this.downBtn.y + this.downBtn.height / 2 - this.hintSprite.height / 2
+        this.hintSprite.y = this.isLandscape ? canvasH - 60 : this.downBtn.y + this.downBtn.height / 2 - this.hintSprite.height / 2
         if (this.isEnglish) {
           this.animateTxt = new PIXI.Text('SWIPE TO PLAY!', {
             fontSize: 28,
