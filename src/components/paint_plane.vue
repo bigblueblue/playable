@@ -219,7 +219,7 @@ export default{
       let gShape = new PIXI.Graphics()
       gShape.lineStyle(4, 0x0000000, 1)
       gShape.drawPath(ctx)
-      marqeeContainer.addChild(gShape)
+      // marqeeContainer.addChild(gShape)
       let bgSprite2 = new PIXI.Sprite.fromImage(configMarqee.planePath)
       bgSprite2.anchor.set(0.5)
       bgSprite2.x = canvasW / 2
@@ -258,7 +258,7 @@ export default{
       let plane = new PIXI.Sprite.fromImage(configMarqee.planeList[1])
       plane.anchor.set(0.5)
       plane.scale.set(0.2)   
-      // paint2.addChild(plane)
+      paint2.addChild(plane)
       console.log(ctx)
       const paint_tween = PIXI.tweenManager.createTween(paint2)
       paint_tween.path = ctx
@@ -277,7 +277,6 @@ export default{
       })
       app.stage.interactive = true
       app.stage.on('pointerdown', () => {
-        marqeeContainer.addChild(paint2)
         paint_tween.start()
       })
       
@@ -348,20 +347,16 @@ export default{
       app.ticker.add(delta => {
         PIXI.tweenManager.update()
         if (!that.isPaint) {
-          paint2.height = 0
           return
         }
         count += 2
         if (count >= 3) {
           brush.position.copy(paint2)
           app.renderer.render(brush, renderTexture, false, null, false)
-          if (count >= 120 && count < 432) {
-            totalH++
-          } else if (count >= 432){
-            totalH--
-          }
-          paint2.height = totalH
-          console.log(totalH)
+          // paint.clear()
+          // paint.lineStyle(4, 0x000000, 1);
+          // paint.moveTo(0, 0)
+          // paint.lineTo(60, 100)
         }
       })
 
