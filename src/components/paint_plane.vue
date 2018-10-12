@@ -1,0 +1,1335 @@
+/* eslint-disable */
+<template>
+  <div id="paintPlane">
+    <svg version="1.0" id="planePath" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 414 736" enable-background="new 0 0 414 736" xml:space="preserve">
+      <path fill="none" storke-width="8" stroke="#000000" stroke-miterlimit="10" d="M98.8,295.5c0,0,5,9.8,38,27c0,0,4.5,1.8,0,4.2l-6.2,3.1c0,0-3.3,2-5.2-4.2l-4.4-6c0,0-2.8-2.2-7.6,3.5c0,0-5.5,3-0.5,10.3c0,0,3.4,5.2,5.9,9.5c0,0-0.5,13.5,1.5,17.5c0,0,4.2,6.8-1.5,9.5c0,0-7.2,7.5,3.2,16.2c0,0,6.8,3.8,10.5,0c0,0,0.5-2,2.5,0c0,0,3.8,6.5,18.2,8.2c0,0-0.8,12.4,10.8,12.4c0,0,9.2-1.4,2-14.9l41-24c0,0,2.8-4,9.8,1.5c0,0,40.8,24.2,51.8,25.2c0,0,11.5,1.8,27.5-16c0,0,5.2-4.8-4.8-13l-30-30c0,0-3-1.2,1.8-4.2l21.5-19.8c0,0,1-3,6.5-0.2c0,0,15.5,9.2,22,0.2c0,0,8-6-2-12l-14-8c0,0-4.2,0-2.5-10.8c0,0,4.5-22.6-11.8-26c0,0-9.2-5.2-17.5,14.5l-9.8,1.5l-9-5.5c0,0-5-3-11.5-1c0,0-12.5,5.2-5,11c0,0,4.5,3.5-1,3.5c0,0-6.5-6.8-22-6.8c0,0-15.2,2.5-24.8,15.8l-50.5-14.2c0,0-7.5-2.8-17.8,3C114,276.8,91.6,288,98.8,295.5z"/>
+    </svg>
+  </div>
+</template>
+<script>
+/* eslint-disable */
+import * as PIXI from 'pixi.js'
+import tweenManager from 'pixi-tween'
+import configMarqee from '../assets/js/paint_config'
+import particles from 'pixi-particles'
+import '../assets/js/pixi-display'
+import 'pixi-svg'
+export default{
+  name: 'paintPlane',
+  data () {
+    return {
+      flag: true,
+      iosLink: 'https://itunes.apple.com/app/id1363863879',
+      androidLink: 'https://play.google.com/store/apps/details?id=com.brokenreality.planemerger.android',
+      isLandscape: false,
+      firstGuid: true,
+      step: 1,
+      time1: null,
+      rank: 1,
+      isMarquee: false, //为true表示切屏在转盘阶段
+      oldPosition: {x: 0, y: 0},
+      addArr: [20, 40, 60, 80, 100, 120, 140, 160, 180, 200],
+      total: -1, // 跑道傻姑娘的总数
+      isFirst: false,
+      cleartimer: null,
+      slotList: [{}, {}, {}, {}],
+      planeList: [],
+      isRun: false,
+      durationTime: 3000,
+      isPaint: false,
+      isEnglish: true,
+      toggleFlag: true, // 切屏的时候step为3时
+      status: 0 // 0 表示转盘 1 表示跑道 2表示到成功页面了
+    }
+  },
+  mounted () {
+    this.getSize()
+    this.initPIXI()
+  },
+  computed: {
+    plane_location: function () {
+      let m = 0
+      if (this.step == 2 || this.step == 3) {
+        m = this.slotList.findIndex(item => {
+          return item.rank
+        })
+        m = m ? 0 : 1
+      }
+      return m
+    }
+  },
+  watch: {
+  },
+  methods: {
+    getSize () {
+      let that = this
+      if (window.innerWidth <= window.innerHeight) {
+        this.isLandscape = false
+      } else {
+        this.isLandscape = true
+      }
+      window.addEventListener('resize', onResize, false)
+      function onResize () {
+        let canvas = document.querySelector('#paintPlane canvas')
+        canvas.parentNode.removeChild(canvas)
+        if (window.innerWidth > window.innerHeight) {
+          that.isLandscape = true
+        } else {
+          that.isLandscape = false
+        }
+        clearInterval(that.cleartimer)
+        console.log(that.status)
+        if (!that.status) {
+          that.isMarquee = true
+          that.firstGuid = true
+          that.initPIXI()
+        } else if (that.status == 1) {
+          that.isMarquee = false
+          clearInterval(that.cleartimer)
+          that.firstGuid = true
+          that.timer = null
+          that.toggleFlag = false
+          that.initPIXI()
+        } else if (that.status == 2) {
+          that.initPIXI()
+        }
+        
+      }
+    },
+    initPIXI () {
+      var canvasW, that = this, topH, canvasH, slotH, slotGap
+      let startY
+        canvasW = this.isLandscape ? 736 : 414
+        canvasH = this.isLandscape ? 414 : 736
+        slotH = this.isLandscape ? 100 : 140
+        slotGap = this.isLandscape ? 200 : 120
+        startY = this.isLandscape ? 42 : 84
+        topH = this.isLandscape ? 130 : 270
+      const trackW = that.isLandscape ? 560 : 330
+      const trackH = that.isLandscape ? 330 : 560
+      let airportW = trackW - 30
+      let airportH = trackH - 34
+      let airportR = 100
+      const r = 300
+      let startX = canvasW / 2
+      const xCoord = [startX - airportW / 2, startX - airportW / 2 + airportR, airportW / 2 - airportR + startX, airportW / 2 + startX];
+      //从上到下
+      const yCoord = [startY, startY + airportR, airportH + startY - airportR, airportH + startY];
+      const winY = startY + airportH / 2
+      
+      const outRadius = 180 // 转盘外半径
+      const inRadius = 124 // 转盘内半径
+      const spinCopies = 6
+      const lightDegrees = -180, startDegrees = 0
+      var app, planeList = new Array(4).fill({}), handObj2, slotList = [], sceneContainer,  path, keySprite
+      var emptyIcon = PIXI.Texture.fromImage(configMarqee.rankEmptyUrl), coinNum = 0, coinSprite
+      var fullIcon = PIXI.Texture.fromImage(configMarqee.rankFillUrl), runningPlanes = [] , planeTemp, trackIconList = [] //new Array(6).fill({})
+      var tweenList = [], trackContainer
+      let canvas
+      app = new PIXI.Application(canvasW, canvasH)
+      //app = PIXI.autoDetectRenderer(canvasW, canvasH)
+      document.getElementById('paintPlane').appendChild(app.view)
+      canvas = document.querySelector('#mergePlane canvas')
+      if (document.body.clientWidth >= 414 * document.body.clientHeight / 736 && that.isLandscape) {
+        app.renderer.view.style.height = 736 * document.body.clientHeight / 414
+        app.renderer.view.style.width = '100%'
+      } else {
+        app.renderer.view.style.height = '100%'
+        app.renderer.view.style.width = 414 * document.body.clientHeight / 736
+      }
+      app.renderer.autoResize = true
+      app.stage = new PIXI.display.Stage()
+      app.stage.group.enableSort = true
+      let group1, group2, group3
+      group1 = new PIXI.display.Group(1, true) 
+      group2 = new PIXI.display.Group(2, true) // 飞机层
+      group3 = new PIXI.display.Group(2, true) // 手指示
+      app.stage.addChild(new PIXI.display.Layer(group1))
+      app.stage.addChild(new PIXI.display.Layer(group2))
+      app.stage.addChild(new PIXI.display.Layer(group3))
+      let pivotSprite, circleBg, lightArr1 = [], lightArr2 = [], outCircleBg, prizeList = []
+      let startIndex = 1, endIndex, rounds, degrees, rotationTime, isBegin = false, currentIndex = 0, clearTime
+      let isFirst = true, beginndex
+      const rotaDegreeList = [0, 180, 300, 360, 60]
+      let addY = that.isLandscape ? 0 : 60
+      const tempX = canvasW / 2 - Math.cos(this.d2a(startDegrees + 4 * 60 + 30)) * (inRadius - 32) + 1.208
+      const tempY =  canvasH / 2 - Math.sin(this.d2a(startDegrees + 4 * 60 + 30)) * (inRadius - 32) - inRadius - 48 + addY// 第一个奖品的位置
+      
+      // 背景等静态图片
+      let bgSprite = new PIXI.Sprite.fromImage(that.isLandscape ? configMarqee.bgUrl : configMarqee.bgUrl)
+      bgSprite.x = 0
+      bgSprite.y = 0
+      bgSprite.width = canvasW
+      bgSprite.height = canvasH
+      app.stage.addChild(bgSprite)
+      // bgSprite.parentGroup = group1
+      let marqeeContainer = new PIXI.Container()
+      app.stage.addChild(marqeeContainer)
+      let logoObj = that.isEnglish ? configMarqee.logoUrl : configMarqee['logoUrl_cn']
+      let logo = new PIXI.Sprite.fromImage(logoObj)
+      logo.anchor.set(0.5)
+      logo.width = that.isEnglish ? 103 : 123
+      logo.height = 73
+      logo.x = that.isLandscape ? 100 : canvasW / 2
+      logo.y = that.isLandscape ? canvasH - 60 : 160
+      marqeeContainer.addChild(logo)
+      let downObj = that.isEnglish ? configMarqee.downBtnUrl : configMarqee['downBtnUrl_cn']
+      console.log(downObj)
+      let downBtn = new PIXI.Sprite.fromImage(downObj)
+      downBtn.anchor.set(0.5)
+      downBtn.width = 150 
+      downBtn.height = that.isEnglish ? 65 : 45
+      downBtn.x = that.isLandscape ? canvasW - 90 : canvasW / 2
+      downBtn.y = that.isLandscape ? canvasH - 45 : 250
+      downBtn.interactive = true
+      marqeeContainer.addChild(downBtn)
+      downBtn.on('pointerdown', () => {
+        that.linkAppStore()
+      })
+      var textureList1 = [], textureList2 = []
+      for (let i = 0; i < 8; i++) {
+        let text1 = PIXI.Texture.fromImage(configMarqee.planeList[i])
+        let text2 = PIXI.Texture.fromImage(configMarqee.trackList[i])
+        textureList1.push(text1)
+        textureList2.push(text2)
+      }
+
+      if (that.status == 1) {
+        currentIndex = that.rank
+        getNewPlane()
+        return
+      } else if (that.status == 2) {
+        getSuccess()
+        return
+      }
+
+
+      var planePath = new PIXI.Sprite.fromImage(configMarqee.planePath)
+      planePath.anchor.set(0.5)
+      planePath.width = 220
+      planePath.height = 154
+      marqeeContainer.addChild(planePath)
+      planePath.x = canvasW / 2
+      planePath.y = that.isLandscape ? canvasH / 2 : 368 + 60
+      let baseX = that.isLandscape ? -160 : 0 //96, 
+      let baseY = that.isLandscape ? 160 : -61 //290
+      let ctx = new PIXI.tween.TweenPath()
+      paintPic(ctx)
+      ctx.closed = true
+      let gShape = new PIXI.Graphics()
+      gShape.lineStyle(4, 0x0000000, 1)
+      gShape.drawPath(ctx)
+      marqeeContainer.addChild(gShape)
+      let bgSprite2 = new PIXI.Sprite.fromImage(configMarqee.planePath)
+      bgSprite2.anchor.set(0.5)
+      bgSprite2.x = canvasW / 2
+      bgSprite2.y = planePath.y
+      bgSprite2.width = planePath.width
+      bgSprite2.height = planePath.height
+      marqeeContainer.addChild(bgSprite2)
+      let shadow = new PIXI.Sprite.fromImage(configMarqee.tracePlane)
+      shadow.width = 220
+      shadow.height = 154
+      marqeeContainer.addChild(shadow)
+      shadow.anchor.set(0.5)
+      shadow.x = canvasW / 2
+      shadow.y = planePath.y
+      var renderTexture = PIXI.RenderTexture.create(app.stage.width, app.stage.height)
+      let rendererTextureSprite = new PIXI.Sprite(renderTexture)
+      shadow.mask = rendererTextureSprite
+      let brush = new PIXI.Graphics()
+      brush.beginFill(0xffffff);
+      brush.drawCircle(0, 0, 5);
+      brush.endFill(); 
+      
+      let picPath = new PIXI.Graphics()
+      picPath.lineStyle(4, 0x0000000, 1)
+      marqeeContainer.addChild(picPath)
+      let paint = new PIXI.Graphics()
+      paint.lineStyle(4, 0x000000, 1);
+      paint.moveTo(0, 0)
+      paint.lineTo(60, 100)
+      let paint2 = new PIXI.Sprite.from(paint.generateCanvasTexture())
+      paint2.x = 99 - baseX;
+      paint2.y = 336 - baseY
+      paint2.anchor.set(1, 1)
+      paint2.rotation = that.d2a(330)
+      marqeeContainer.addChild(paint2)
+      let plane = new PIXI.Sprite.fromImage(configMarqee.planeList[1])
+      plane.anchor.set(0.5)
+      plane.scale.set(0.2)   
+      // paint2.addChild(plane)
+      console.log(ctx)
+      const paint_tween = PIXI.tweenManager.createTween(paint2)
+      paint_tween.path = ctx
+      paint_tween.time = 8000
+      paint_tween.easing = PIXI.tween.Easing.linear()
+      // paint_tween.loop = true
+      paint_tween.on('start', () => {
+        that.isPaint = true
+        console.log(ctx)
+      })
+      paint_tween.on('end', () => {
+        console.log(ctx)
+        that.isPaint = false
+        // getNewPlane()
+        spillAction(canvasW, canvasH, planePath.x, planePath.y, [configMarqee.ribbonList[0], configMarqee.ribbonList[1], configMarqee.ribbonList[2]], configMarqee.ribbonEmitterConfig)
+      })
+      app.stage.interactive = true
+      app.stage.on('pointerdown', () => {
+        marqeeContainer.addChild(paint2)
+        paint_tween.start()
+      })
+      
+      function paintPic (ctx) {
+        ctx.moveTo(99 - baseX,336 - baseY);
+        ctx.bezierCurveTo(88 - baseX,328 - baseY,127 - baseX,306 - baseY,112 - baseX,316 - baseY);
+        ctx.moveTo(112 - baseX,316 - baseY);
+        ctx.quadraticCurveTo(127 - baseX,307 - baseY, 130 - baseX, 312 - baseY);
+        ctx.moveTo(181 - baseX,326 - baseY);
+        ctx.bezierCurveTo(203 - baseX,300 - baseY,230 - baseX,318 - baseY,224 - baseX,313 - baseY);
+        ctx.moveTo(224 - baseX,313 - baseY);
+        ctx.quadraticCurveTo(230 - baseX, 316 - baseY, 231 - baseX, 315 - baseY);
+        ctx.moveTo(230 - baseX, 312 - baseY)
+        ctx.bezierCurveTo(225 - baseX,306 - baseY,240 - baseX,300 - baseY,231 - baseX,304 - baseY);
+        ctx.moveTo(231 - baseX,304 - baseY);
+        ctx.quadraticCurveTo(231 - baseX,304 - baseY, 246 - baseX, 302 - baseY);
+        ctx.moveTo(255 - baseX,308 - baseY);
+        ctx.lineTo(265 - baseX,308 - baseY);
+        ctx.bezierCurveTo(272 - baseX,289 - baseY,300 - baseX,292 - baseY,280 - baseX,290 - baseY);   
+        ctx.moveTo(280 - baseX,290 - baseY);
+        ctx.quadraticCurveTo(300 - baseX,292 - baseY, 295 - baseX, 328 - baseY);
+        ctx.moveTo(307 - baseX,335 - baseY);
+        ctx.quadraticCurveTo(320 - baseX, 344 - baseY, 316 - baseX, 346 - baseY);
+        ctx.moveTo(310 - baseX,354 - baseY);
+        ctx.bezierCurveTo(302 - baseX,352 - baseY,280 - baseX,352 - baseY,287 - baseX,346 - baseY);
+        ctx.moveTo(287 - baseX,346 - baseY);
+        ctx.bezierCurveTo(280 - baseX,357 - baseY,270  - baseX,368 - baseY,260 - baseX,373 - baseY);
+        ctx.moveTo(260 - baseX,371 - baseY);
+        ctx.bezierCurveTo(270 - baseX,380 - baseY,301 - baseX,412- baseY,293 - baseX,404 - baseY);
+        ctx.moveTo(293 - baseX,404 - baseY);
+        ctx.bezierCurveTo(301 - baseX,412 - baseY,295 - baseX,420 - baseY,298 - baseX,416 - baseY);
+        ctx.moveTo(298 - baseX,416 - baseY);
+        ctx.bezierCurveTo(295 - baseX,420 - baseY,272 - baseX,435 - baseY,282 - baseX,429 - baseY);
+        // ctx.moveTo(298 - baseX,416 - baseY);
+        // ctx.bezierCurveTo(272 - baseX,435 - baseY,272 - baseX,435 - baseY,282 - baseX,429 - baseY);
+        ctx.moveTo(282 - baseX,429 - baseY);
+        ctx.bezierCurveTo(272 - baseX,435 - baseY,251 - baseX,430 - baseY,264 - baseX,432 - baseY);
+        ctx.moveTo(264 - baseX,431 - baseY);
+        ctx.bezierCurveTo(251 - baseX,429 - baseY,204 - baseX,406 - baseY,210 - baseX,405 - baseY);
+        ctx.moveTo(210 - baseX,405 - baseY);
+        ctx.bezierCurveTo(204 - baseX,410 - baseY,172 - baseX,428 - baseY,167 - baseX,430 - baseY);
+        ctx.moveTo(167 - baseX,430 - baseY);
+        ctx.bezierCurveTo(173 - baseX,441 - baseY,154 - baseX,446 - baseY,164 - baseX,445 - baseY);
+        ctx.moveTo(164 - baseX,445 - baseY);
+        ctx.bezierCurveTo(154 - baseX,445 - baseY,133 - baseX,430 - baseY,151 - baseX,434 - baseY);
+        ctx.moveTo(151 - baseX,434 - baseY);
+        ctx.bezierCurveTo(133 - baseX,430 - baseY,127 - baseX,429 - baseY,133 - baseX,422 - baseY);
+        ctx.moveTo(133 - baseX,422 - baseY);
+        ctx.bezierCurveTo(127 - baseX,429 - baseY,110 - baseX,423 - baseY,122 - baseX,425 - baseY);
+        
+        ctx.moveTo(122- baseX,426 - baseY);
+        ctx.quadraticCurveTo(110 - baseX,422 - baseY, 116 - baseX, 411 - baseY);
+        ctx.moveTo(116 - baseX, 411 - baseY);
+        ctx.quadraticCurveTo(116 - baseX,398 - baseY, 122 - baseX, 403 - baseY);
+        ctx.moveTo(122 - baseX, 403 - baseY);
+        ctx.quadraticCurveTo(116 - baseX,398 - baseY, 118 - baseX, 382 - baseY);
+        ctx.moveTo(113 - baseX,373 - baseY);
+        ctx.bezierCurveTo(105 - baseX,360 - baseY,124 - baseX,354 - baseY,116 - baseX,360 - baseY);
+        ctx.moveTo(116 - baseX, 360 - baseY);
+        ctx.quadraticCurveTo(123 - baseX,353 - baseY, 128 - baseX, 369 - baseY);
+        ctx.moveTo(128 - baseX, 369 - baseY);
+        ctx.quadraticCurveTo(113 - baseX,348 - baseY, 138 - baseX, 362 - baseY);
+        ctx.lineTo(138 - baseX,362 - baseY)
+        ctx.moveTo(138 - baseX,362 - baseY);
+        ctx.bezierCurveTo(112 - baseX,347 - baseY,88 - baseX,328 - baseY,99 - baseX,336 - baseY);
+      }
+      var count = 0, totalH = paint2.height, times = 0
+      app.ticker.add(delta => {
+        PIXI.tweenManager.update()
+        if (!that.isPaint) {
+          paint2.height = 0
+          return
+        }
+        count += 2
+        if (count >= 3) {
+          brush.position.copy(paint2)
+          app.renderer.render(brush, renderTexture, false, null, false)
+          if (count >= 120 && count < 432) {
+            totalH++
+          } else if (count >= 432){
+            totalH--
+          }
+          paint2.height = totalH
+          console.log(totalH)
+        }
+      })
+
+      function dropRibbon () {
+        let sprites = new PIXI.particles.ParticleContainer(6, {
+          scale: true,
+          position: true,
+          rotation: true,
+          uvs: true,
+          alpha: true
+        })
+        app.stage.addChild(sprites)
+        let ribbons = []
+        let totalSprites = 20
+        for (let i = 0; i < totalSprites; i++) {
+          let ribbon = PIXI.Sprite.fromImage(configMarqee.ribbonList[0])
+          ribbon.anchor.set(0.5)
+          ribbon.scale.set(0.8 + Math.random() * 0.3)
+          ribbon.x = Math.random() * canvasW
+          ribbon.y = Math.random() * canvasH
+          ribbon.direction = Math.random() * Math.PI * 2
+          ribbon.speed = (2 + Math.random() * 2) * 0.2
+          ribbon.offset = Math.random() * 100
+          ribbons.push(ribbon)
+          sprites.addChild(ribbon)
+        }
+      }
+     
+       // marqeeContainer.visible = false
+      // currentIndex = 4
+      // that.rank = currentIndex
+      // that.status = 1
+      // // getSuccess()
+      // getNewPlane()
+      function getNewPlane () {
+        let goodSprite
+        sceneContainer = new PIXI.Container()
+        app.stage.addChild(sceneContainer)
+        trackContainer = new PIXI.Container()
+        sceneContainer.addChild(trackContainer)
+        goodSprite = new PIXI.Sprite(textureList1[0])
+        goodSprite.anchor.set(0.5)
+        let pos = planePath.getGlobalPosition()
+        app.stage.addChild(goodSprite)
+        goodSprite.scale.set(0.6)
+        goodSprite.x = pos.x
+        goodSprite.y = pos.y
+
+        goodSprite.interactive = true
+        // goodSprite.parentGroup = group2
+        // if (that.step == 1) {
+          goodSprite.pName = Math.random().toString(36).substr(2)
+          goodSprite.pRank = that.rank
+          goodSprite.pIndex = 0
+          planeList[0] = goodSprite
+          that.$set(that.planeList, 0, goodSprite)
+        // } else {
+          
+          
+        // }
+       
+        if (that.status == 1 && !that.isMarquee) {
+          showScene2(goodSprite)
+          return
+        }
+        setTimeout(() => {
+          showScene2(goodSprite)
+        }, 800)
+      }
+      //场景二
+      function showScene2 (goodSprite) {
+        if (that.status == 1 && that.step >= 2) {
+          app.stage.removeChild(goodSprite)
+          let bgSprite2 = new PIXI.Sprite.fromImage(that.isLandscape ? configMarqee.bgUrl2 : configMarqee.bgUrl)
+          bgSprite2.x = 0
+          bgSprite2.y = 0
+          bgSprite2.width = canvasW
+          bgSprite2.height = canvasH
+          // bgSprite2.alpha = 0
+          // sceneContainer.parentGroup = group1
+          sceneContainer.addChild(bgSprite2)
+          drawImage()
+          return
+        }
+        const plane_tween = PIXI.tweenManager.createTween(goodSprite)
+        plane_tween.from({y: tempY, scale: {x: 0.22, y: 0.22}}).to({y: tempY - (that.isLandscape ? 40 : 90), scale: {x: 0.48, y: 0.48}})
+        plane_tween.easing = PIXI.tween.Easing.linear()
+        plane_tween.time = 300
+
+        const plane_tween2 = PIXI.tweenManager.createTween(goodSprite)
+        plane_tween2.from({y: tempY - (that.isLandscape ? 60 : 90)}).to({y: tempY})
+        plane_tween2.easing = PIXI.tween.Easing.inOutBack()
+        //plane_tween2.delay = 200
+        plane_tween2.time = 500
+        
+        let bgSprite2 = new PIXI.Sprite.fromImage(that.isLandscape ? configMarqee.bgUrl2 : configMarqee.bgUrl)
+        bgSprite2.x = 0
+        bgSprite2.y = 0
+        bgSprite2.width = canvasW
+        bgSprite2.height = canvasH
+        sceneContainer.addChild(bgSprite2)
+        bgSprite2.alpha = 0
+        const bg_tween = PIXI.tweenManager.createTween(bgSprite2)
+        bg_tween.delay = 100
+        bg_tween.from({alpha: 0}).to({alpha: 1})
+        bg_tween.time = 200
+        bg_tween.easing = PIXI.tween.Easing.linear()
+        if (that.status == 1 && !that.isMarquee) { // 表示切屏过来的
+          if (that.step == 2) {
+            goodSprite.alpha = 0
+          }
+          // goodSprite.scale.set()
+          bgSprite2.alpha = 1
+          drawImage(goodSprite)
+          return
+        } else {
+          bg_tween.start()
+          bg_tween.chain(plane_tween).chain(plane_tween2)
+        }
+        plane_tween.on('end', () => {
+          play(goodSprite)
+          drawImage(goodSprite)
+        })
+      }
+      function drawImage (goodSprite) {
+        let coin = new PIXI.Sprite.fromImage(configMarqee.coinUrl)
+        coin.anchor.set(0)
+        coin.width = that.isLandscape ? 40 :49
+        coin.height = that.isLandscape ? 38 : 47
+        coin.x = 10
+        coin.y = 10
+        sceneContainer.addChild(coin)
+        coinNum = currentIndex * 100
+        coinSprite = new PIXI.Text(coinNum, {
+          fontWeight: 'bold',
+          fontSize: that.isLandscape ? 36 : 40,
+          fontFamily: 'Arial',
+          fill: '0xFFDF18'
+        })
+        coinSprite.x = that.isLandscape ? 60 : 70
+        coinSprite.y = 10
+        sceneContainer.addChild(coinSprite)
+        //logo. btn
+        let logoObj = that.isEnglish ? configMarqee.logoUrl : configMarqee['logoUrl_cn']
+        let logo = new PIXI.Sprite.fromImage(logoObj)
+        logo.anchor.set(0, 1)
+        logo.width = that.isEnglish ? 103 : 123
+        logo.height = 73
+        logo.y = canvasH - 15
+        logo.x = 10
+        sceneContainer.addChild(logo)
+        let downObj = that.isEnglish ? configMarqee.downBtnUrl : configMarqee['downBtnUrl_cn']
+        let downBtn = new PIXI.Sprite.fromImage(downObj)
+        downBtn.width = 150 
+        downBtn.height = that.isEnglish ? 65 : 45
+        downBtn.anchor.set(1, 1)
+        downBtn.y = canvasH - 10
+        downBtn.x = canvasW - 10
+        downBtn.interactive = true
+        sceneContainer.addChild(downBtn)
+        downBtn.on('pointerdown', () => {
+          that.linkAppStore()
+        })
+        let track = new PIXI.Sprite.fromImage(that.isLandscape ? configMarqee.trackUrl2 :  configMarqee.trackUrl)
+        track.anchor.set(0.5)
+        track.width = trackW
+        track.height = trackH
+        track.x = canvasW / 2
+        track.y = canvasH / 2 - 20
+        sceneContainer.addChild(track)
+
+        path = new PIXI.tween.TweenPath()
+        path.moveTo(xCoord[0], winY);
+        path.lineTo(xCoord[0], winY);
+        path.arc(xCoord[1], yCoord[1], airportR, -Math.PI, -Math.PI / 2, false);
+        path.lineTo(xCoord[2], yCoord[0]);
+        path.arc(xCoord[2], yCoord[1], airportR, -Math.PI / 2, 0, false);
+        path.lineTo(xCoord[3], winY);
+        path.lineTo(xCoord[3], yCoord[2]);
+        path.arc(xCoord[2], yCoord[2], airportR, 0, -3 * Math.PI / 2, false);
+        path.lineTo(xCoord[1], yCoord[3]);
+        path.arc(xCoord[1], yCoord[2], airportR, -3 * Math.PI / 2, -Math.PI, false);
+        path.lineTo(xCoord[0], winY);
+        path.closed = true
+        
+        let gPath = new PIXI.Graphics();
+        gPath.lineStyle(9, 0xfffffff, 1);
+        gPath.drawPath(path);
+        // sceneContainer.addChild(gPath);
+
+        keySprite = new PIXI.Sprite.fromImage(configMarqee.keyUrl)
+        keySprite.anchor.set(0.5)
+        keySprite.scale.set(0.8)
+        keySprite.width = 32
+        keySprite.height = 32
+        keySprite.x = canvasW - (canvasW - track.width) / 2 - 15
+        keySprite.y = track.y
+        sceneContainer.addChild(keySprite)
+
+        for (let i = 0; i < 4; i++) {
+          let rankIcon = new PIXI.Sprite(emptyIcon)
+          rankIcon.anchor.set(0, 0)
+          rankIcon.width = that.isLandscape ? 24 : 32
+          rankIcon.height = that.isLandscape ? 20 :30
+          rankIcon.x = (canvasW - track.width) / 2
+          trackIconList.push(rankIcon)
+          if (that.isLandscape) {
+            rankIcon.x = (canvasW - track.width) / 2 + 4
+            rankIcon.y = track.y + 20 - 20* i //60
+          } else {
+            rankIcon.y = track.y - 30* i //60
+          }
+          
+          sceneContainer.addChild(rankIcon)
+        }
+        // 降落块
+        let slotContainer = new PIXI.Container()
+        sceneContainer.addChild(slotContainer)
+        for (let i = 0; i < 4; i++) {
+          let slotSprite = new PIXI.Sprite.fromImage(configMarqee.slot)
+          slotSprite.anchor.set(0.5)
+          slotSprite.width = 88
+          slotSprite.height = 64
+          let x = (i % 2) * slotGap + (canvasW - slotGap) / 2
+          let y = Math.floor(i / 2) * slotH + topH
+          let rank = 0, occpuied = false, running = false
+          slotSprite.x = x
+          slotSprite.y = y
+          if (that.step >= 2 && that.status == 1) {
+            that.$set(that.slotList[i], 'x', x)
+            that.$set(that.slotList[i], 'y', y)
+            rank = that.slotList[i].rank
+            occpuied = that.slotList[i].occpuied
+            running = that.slotList[i].running
+          } else {
+            slotSprite.rank = rank
+            slotSprite.occpuied = occpuied
+            slotSprite.running = running
+            that.$set(that.slotList, i, {x, y, rank, occpuied, running})
+          }
+          slotList.push({x, y, rank, occpuied, running})
+          slotContainer.addChild(slotSprite)
+        }
+       
+        
+        const plane_tween3 = PIXI.tweenManager.createTween(goodSprite)
+        plane_tween3.time = 400
+        plane_tween3.easing = PIXI.tween.Easing.inOutBack()
+        plane_tween3.from({scale: {x: 0.4, y: 0.4}, x: tempX, y: tempY})
+        plane_tween3.to({scale: {x: 0.26, y: 0.26}, x: slotList[0].x, y: slotList[0].y})
+        if (that.status == 1 && !that.isMarquee) {
+          if (that.step == 1){ 
+            goodSprite.scale.set(0.26)
+            slotList[0].rank = that.rank
+            slotList[0].occpuied = true
+            that.$set(that.slotList[0], 'rank', that.rank)
+            that.$set(that.slotList[0], 'occpuied', true)
+            goodSprite.x = slotList[0].x
+            goodSprite.y = slotList[0].y
+            if (slotList[0].occpuied) {
+              dropGift(1, that.rank)
+            } else {
+              dropGift(0, that.rank)
+            }
+            play(goodSprite)
+          } else if (that.step == 2) {
+            createPlane(that.slotList[that.plane_location ? 0 : 1].rank, that.plane_location ? 0 : 1)
+          } else if (that.step == 3) {
+            that.total = -1
+            that.isRun = true
+            createPlane(that.slotList[that.plane_location ? 0 : 1].rank, that.plane_location ? 0 : 1)
+            that.toggleFlag = true
+            that.isRun = false
+            addMoney(that.plane_location ? 0 : 1, that.slotList[that.plane_location ? 0 : 1].rank)
+            dropGift(that.plane_location, that.rank + 1)
+          } else if (that.step > 3) { // 指示结束了， 几架飞机在跑道 几架在降落块上
+            planeList = that.planeList
+            that.durationTime = 3000
+            that.total = -1
+            that.slotList.forEach((item, index) => {
+              if (item.rank) {
+                if (item.running) {
+                  that.isRun = true
+                } else {
+                  that.isRun = false
+                }
+                createPlane(item.rank, index)
+                if (item.running) {
+                  coinSprite.text = coinNum
+                  addMoney(index, item.rank)
+                  console.log(index, item.rank)
+                }
+              } else if (item.occpuied && !item.rank) {
+                  dropGift(index, that.rank)
+              }
+            })
+            if (that.step >= 5) {
+              that.isRun = false
+              that.cleartimer = setInterval(() => {
+                dropGift('', that.rank)
+              }, 2800)
+            }
+          } 
+        } else {
+          goodSprite.scale.set(0.26)
+          slotList[0].rank = that.rank
+          slotList[0].occpuied = true
+          that.$set(that.slotList[0], 'rank', that.rank)
+          that.$set(that.slotList[0], 'occpuied', true)
+          plane_tween3.start()
+          plane_tween3.on('end', () => {
+            if (slotList[0].occpuied) {
+              dropGift(1, that.rank)
+            } else {
+              dropGift(0, that.rank)
+            }
+            that.status = 1
+          })
+        }
+        
+        
+      }
+      function dropGift (n, rank) {  // 掉箱子
+        // console.log('掉箱子', n, rank)
+        let occpuiedArr = []
+        if (typeof n != 'number'){
+          slotList.forEach((item, index) => {
+            if (!item.occpuied && !item.running) {
+              occpuiedArr.push(index)
+            }
+          })
+          // console.log(occpuiedArr)
+          if (!occpuiedArr.length) {
+            return
+          }
+          n = occpuiedArr[Math.floor(Math.random() * occpuiedArr.length)]
+          // console.log(n)
+        }
+        let gift = new PIXI.Sprite.fromImage(configMarqee.boxUrl)
+        gift.anchor.set(0.5)
+        gift.scale.set(0.9)
+        gift.x = slotList[n].x
+        gift.interactive = true
+        sceneContainer.addChild(gift)
+        gift.y = 0
+        const gift_tween1 = PIXI.tweenManager.createTween(gift)
+        gift_tween1.from({y: 0}).to({y: slotList[n].y - 6})
+        gift_tween1.time = 500
+        gift_tween1.easing = PIXI.tween.Easing.outBack()
+        slotList[n].occpuied = true
+        that.$set(that.slotList[n], 'occpuied', true)
+        const gift_tween2 = PIXI.tweenManager.createTween(gift)
+        gift_tween2.from({scale: {x: 0.9, y: 0.9}}).to({scale: {x: 1, y: 1}})
+        gift_tween2.time = 400
+        gift_tween2.repeat = 2
+        gift_tween2.easing = PIXI.tween.Easing.inOutBack()
+        gift_tween2.pingPong = true
+        const gift_tween3 = PIXI.tweenManager.createTween(gift)
+        gift_tween3.from({y: slotList[n].y - 6}).to({y: slotList[n].y - 6 - 10})
+        gift_tween3.time = 400
+        gift_tween3.repeat = 3
+        gift_tween3.easing = PIXI.tween.Easing.inBounce() 
+        gift_tween3.pingPong = true
+        gift_tween1.start()
+        gift_tween1.chain(gift_tween2).chain(gift_tween3)
+        let isOpen = true
+        gift_tween3.on('end', () => {
+          if (!isOpen) {return}
+          sceneContainer.removeChild(gift)
+          console.log(`%c ${isOpen}`,'color:green')
+          isOpen = false
+          createPlane(rank, n)
+          console.log(`%c ${isOpen}`,'color:green')
+          spillAction(100, 100, slotList[n].x, slotList[n].y, [configMarqee.chipUrl, configMarqee.starUrl], configMarqee.composeEmitterConfig)
+        })
+
+        gift.on('pointerdown', () => {
+          if (!isOpen) {return}
+          isOpen = false
+          sceneContainer.removeChild(gift)
+          PIXI.tweenManager.removeTween(gift_tween1)
+          spillAction(100, 100, slotList[n].x, slotList[n].y, [configMarqee.chipUrl, configMarqee.starUrl], configMarqee.composeEmitterConfig)
+          createPlane(rank, n)
+        })
+      }
+      function createPlane (r, i = 1) {
+        console.log(`%c 创建飞机${r}，在${i}位置, step为${that.step}`,'color:blue')
+        let plane = new PIXI.Sprite(textureList1[r - 1])
+        plane.anchor.set(0.5, 0.5)
+        plane.scale.set(0)
+        plane.pName = Math.random().toString(36).substr(2)
+        plane.pRank = r
+        plane.pIndex = i
+        plane.x = slotList[i].x
+        plane.y = slotList[i].y
+        app.stage.addChild(plane)
+        slotList[i].rank = r
+        slotList[i].occpuied = true
+        that.$set(that.slotList[i], 'rank', r)
+        that.$set(that.slotList[i], 'occpuied', true)
+        planeList[i] = plane
+        that.$set(that.planeList, i, plane)
+        plane.interactive = true
+        plane.buttonMode = true
+        if (that.step >= 5 && that.status == 1 && that.isRun) {
+        } else if (!that.isRun){
+          // console.log('零零落落')
+          const plane_tween = PIXI.tweenManager.createTween(plane)
+          plane_tween.from({scale: {x: 0, y: 0}}).to({scale: {x: 0.26, y: 0.26}})
+          plane_tween.loop = false
+          plane_tween.time = 400
+          plane_tween.easing = PIXI.tween.Easing.outBack()
+          plane_tween.start()
+        }
+
+        if (that.step == 1) { // 指引合并 --- 指引到跑道 --- 指引返回
+          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 30, sceneContainer)
+          handObj2.sprite.parentGroup = group3
+          handObj2.tween.from({x: slotList[1].x}).to({x: slotList[0].x})
+          handObj2.tween.time = 1600
+          handObj2.tween.start()
+        } else if (that.step == 2) {
+          handObj2 = that.createHandTween(slotList[i].x, slotList[i].y + 12, sceneContainer)
+          handObj2.sprite.anchor.set(0.5, 0)
+          handObj2.sprite.parentGroup = group3
+          handObj2.tween.from({x: slotList[i].x, y: slotList[i].y + 12}).to({x: trackIconList[1].x + 40, y: trackIconList[1].y})
+          handObj2.tween.time = 1200
+          handObj2.tween.pingPong = false
+          handObj2.tween.easing = PIXI.tween.Easing.outQuad()
+          handObj2.tween.start()
+        } else if (that.step == 3 && that.toggleFlag) {
+          let i = 1
+          if (slotList[0].running) {
+            i = 0
+          }
+          if (handObj2 && handObj2.sprite) {
+            sceneContainer.removeChild(handObj2.sprite)
+            PIXI.tweenManager.removeTween(handObj2.tween)
+            handObj2 = {}
+          }
+          handObj2 = that.createHandTween(slotList[i].x + 10, slotList[i].y + 30, sceneContainer)
+          handObj2.tween.start()
+        } else if (that.step == 4) {
+          if (handObj2 && handObj2.sprite) {
+            return
+          }
+          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 20, sceneContainer)
+          handObj2.sprite.parentGroup = group3
+          handObj2.tween.from({x: slotList[1].x}).to({x: slotList[0].x})
+          handObj2.tween.time = 1600
+          handObj2.tween.start()
+        }else if (that.step == 5) {
+          console.log('开始定时器啦',that.step)
+          that.cleartimer = setInterval(() => {
+            dropGift('', that.rank)
+          }, 2800)
+        } else {}
+        play(plane)
+      }
+      
+
+      function play (item) { // 合成
+        item.on('pointerdown', onDragStart)
+        item.on('pointerup', onDragEnd)
+        item.on('pointerupoutside', onDragEnd)
+        item.on('pointermove', onDragMove)
+
+        function onDragStart (event) {
+          this.data = event.data
+          this.alpha = 0.5
+          this.dragging = true
+          that.oldPosition.x = this.x
+          that.oldPosition.y = this.y
+        }
+        function onDragEnd (event) {
+          if (!this.dragging) {return}
+          this.alpha = 1
+          let moveI = this.pIndex
+          let endI = findCloser(this.x, this.y, 40, moveI)
+          let moveRank = slotList[moveI].rank
+          console.log(`%c ${moveI}`, 'color: deeppink')
+          if (endI > -1) {  // 有最近的
+            let endRank = slotList[endI].rank
+            let planeObj2 = planeList[moveI]
+            let planeObj1 = planeList[endI]
+            if (endRank == moveRank && !slotList[endI].running) { // 合成
+              if (that.step == 1 || that.step == 5 || that.step == 4) {
+                if (handObj2 && handObj2.sprite) {
+                  sceneContainer.removeChild(handObj2.sprite)
+                  PIXI.tweenManager.removeTween(handObj2.tween)
+                  handObj2 = {}
+                }
+                that.step++
+              }
+              app.stage.removeChild(planeList[moveI])
+              app.stage.removeChild(planeList[endI])
+              planeList[moveI] = {}
+              planeList[endI] = {}
+              slotList[moveI].rank = 0
+              slotList[endI].rank = 0
+              slotList[moveI].occpuied = false
+              slotList[endI].occpuied = true
+              that.$set(that.slotList[moveI], 'rank', 0)
+              that.$set(that.slotList[moveI], 'occpuied', false)
+              that.$set(that.slotList[endI], 'rank', 0)
+              that.$set(that.slotList[endI], 'occpuied', true)
+              that.$set(that.planeList, moveI, {})
+              that.$set(that.planeList, endI, {})
+              if (moveRank + 1 == that.rank + 3) {
+                clearInterval(that.cleartimer)
+                app.stage.removeChild(marqeeContainer)
+                planeList.forEach(item => {
+                  app.stage.removeChild(item)
+                })
+                getSuccess()
+              } else {
+                spillAction(100, 100, slotList[endI].x, slotList[endI].y, [configMarqee.lightCircle, configMarqee.starUrl], configMarqee.lightEmitterConfig)
+                createPlane(moveRank + 1, endI)
+              }
+            } else if (endRank && endRank != moveRank && !slotList[endI].running) { // 交换位置
+              if (that.step < 5) {
+                this.x = that.oldPosition.x
+                this.y = that.oldPosition.y
+                return
+              }
+              planeObj2.x = slotList[endI].x
+              planeObj2.y = slotList[endI].y
+              planeObj2.pIndex = endI
+              planeObj1.pIndex = moveI
+              planeObj1.x = slotList[moveI].x
+              planeObj1.y = slotList[moveI].y
+              
+              planeList[moveI] = planeObj1
+              planeList[endI] = planeObj2
+
+              slotList[endI].rank = moveRank
+              slotList[moveI].rank = endRank
+              that.$set(that.slotList[endI], 'rank', moveRank)
+              that.$set(that.slotList[moveI], 'rank', endRank)
+              that.$set(that.planeList, moveI, planeObj1)
+              that.$set(that.planeList, endI, planeObj2)
+              // console.log(`%c 终点飞机${endRank}，在终点${endI}位置`,'color:blue')
+              // console.log(`%c 移动飞机${moveRank}，在终点${moveI}位置`,'color:blue')
+              console.log(`%c 在${endI}位置, 交换后${slotList[endI].rank}`,'color:red')
+              console.log(`%c 在${moveI}位置, 交换后${slotList[moveI].rank}，`,'color:red')
+              console.log('=================')
+              console.log(`%c 交换后${planeList[endI].pRank}}，在${planeList[endI].pIndex}位置`,'color:red')
+              console.log(`%c 交换后${planeList[moveI].pRank}}，在${planeList[moveI].pIndex}位置`,'color:red')
+            } else if (slotList[endI].occpuied || slotList[endI].running){ //挪不动
+              this.x = that.oldPosition.x
+              this.y = that.oldPosition.y
+            } else {  // 挪动飞机
+              if (that.step < 4) {
+                this.x = that.oldPosition.x
+                this.y = that.oldPosition.y
+                return
+              }
+              this.x = slotList[endI].x
+              this.y = slotList[endI].y
+              planeObj2.pIndex = endI
+              planeList[endI] = planeObj2
+              planeList[moveI] = {}
+              that.$set(that.planeList, moveI, {})
+              that.$set(that.planeList, endI, planeObj2)
+              slotList[endI].occpuied = true
+              slotList[endI].rank = moveRank
+              slotList[moveI].rank = 0
+              slotList[moveI].occpuied = false
+              that.$set(that.slotList[endI], 'occpuied', true)
+              that.$set(that.slotList[endI], 'rank', moveRank)
+              that.$set(that.slotList[moveI], 'rank', 0)
+              that.$set(that.slotList[moveI], 'occpuied', false)
+            }
+          } else {
+            if (Math.abs(this.x - trackIconList[3].x) < 30) { // 可以上轨道
+              if (that.step < 2 && that.step == 3) {
+                this.x = that.oldPosition.x
+                this.y = that.oldPosition.y
+                return
+              }
+              this.x = trackIconList[0].x + 12
+              // 跑
+              if (handObj2 && handObj2.sprite && !that.isFirst) {
+                sceneContainer.removeChild(handObj2.sprite)
+                that.step++
+                addMoney (moveI, moveRank)
+                if (slotList[1].running) {
+                  dropGift(0, moveRank)
+                } else {
+                  dropGift(1, moveRank)
+                }
+                that.isFirst = true
+              } else {
+                addMoney (moveI, moveRank)
+              }
+            } else {
+              this.x = that.oldPosition.x
+              this.y = that.oldPosition.y
+            }
+          }
+          this.data = null
+          this.dragging = false
+        }
+        function onDragMove (event) {
+          if (this.dragging) {
+            let newPosition = this.data.getLocalPosition(this.parent)
+            this.x = newPosition.x
+            this.y = newPosition.y
+          }
+        }
+       function findCloser (x,y,r,idx){
+          return slotList.findIndex((item,index) => {
+            let tx = item.x;
+            let ty = item.y;
+            let dis = Math.sqrt(Math.pow(Math.abs(x - tx), 2) + Math.pow(Math.abs(y - ty), 2));
+            if(dis < r && index != idx){
+              return true
+            }
+          })
+        }
+      }
+
+      function addMoney (moveI, rank) {
+        console.log('去跑道啦', moveI, rank)
+        that.durationTime += 500
+        spillAction(40, 60, xCoord[0], winY, [configMarqee.starUrl], configMarqee.starEmitterConfig)
+        that.total++
+        trackIconList[that.total].texture = fullIcon
+        planeTemp = new PIXI.Container()
+        sceneContainer.addChild(planeTemp)
+        let planeShadow = new PIXI.Sprite.fromImage(configMarqee.planeList[rank - 1])
+        planeShadow.anchor.set(0.5)
+        planeShadow.alpha = 0.5
+        planeShadow.pRank = rank
+        planeShadow.pIndex = moveI
+        planeShadow.x = slotList[moveI].x
+        planeShadow.y = slotList[moveI].y
+        planeShadow.scale.set(0.26)
+        planeShadow.interactive = true 
+        planeShadow.buttonMode = true
+        planeTemp.addChild(planeShadow)
+        slotList[moveI].running = true
+        slotList[moveI].occpuied = true
+        that.$set(that.slotList[moveI], 'occpuied', true)
+        that.$set(that.slotList[moveI], 'running', true)
+
+        let arrow = new PIXI.Sprite.fromImage(configMarqee.occpuiedUrl)
+        arrow.width = 24
+        arrow.height = 24
+        arrow.anchor.set(1, 1)
+        arrow.x = slotList[moveI].x + planeShadow.width / 2
+        arrow.y = slotList[moveI].y + planeShadow.height / 2
+        planeTemp.addChild(arrow)
+        let noFlag = false, newIndex = 0
+        planeList[moveI].texture = textureList2[planeList[moveI].pRank - 1]
+        that.$set(that.planeList[moveI], 'texture', textureList2[planeList[moveI].pRank - 1])
+        planeList[moveI].width = 80
+        planeList[moveI].height = 80
+        let moving_tween = PIXI.tweenManager.createTween(planeList[moveI])
+        runningPlanes.push(planeList[moveI])
+        tweenList.push(moving_tween)
+        moving_tween.path = path
+        moving_tween.time = that.durationTime
+        moving_tween.easing = PIXI.tween.Easing.linear()
+        moving_tween.loop = true
+        moving_tween.start()
+        moving_tween.on('start', () => {
+          planeShadow.on('pointerdown', returnBack)
+          function returnBack (event) {
+            let amid = event.target.parent
+            let ind = this['pIndex'], rank = this['pRank']
+            let endX = slotList[ind].x
+            let endY = slotList[ind].y
+            if (slotList[ind].running) {
+              if (handObj2 && handObj2.sprite) {
+                sceneContainer.removeChild(handObj2.sprite)
+                handObj2 = {}
+              }
+              let rIndex = runningPlanes.findIndex(v => {
+                return v.pIndex == ind
+              })
+              console.log('回来的时候：', ind)
+              const tw = PIXI.tweenManager.createTween(planeList[ind])
+              tw.from({
+                x: planeList[ind].x,
+                y: planeList[ind].y
+              })
+              tw.to({
+                x: endX,
+                y: endY
+              })
+              tw.time = 300
+              tw.easing = PIXI.tween.Easing.linear()
+              tw.start()
+              tw.loop = false
+              tw.on('start', () => {
+                console.log('i am back')
+              })
+              let repeatFlag = false
+              tw.on('end', () => { //对应等级的running 回了
+                if (repeatFlag) {return}
+                console.log('%c 我回了', 'color: yellow')
+                planeList[ind].texture = textureList1[rank - 1]
+                that.$set(that.planeList[ind], 'texture', textureList1[rank - 1])
+                planeList[ind].scale.set(0.26)
+                // that.$set(that.planeList[ind], 'scale', {x: 0.26, y: 0.26})
+                planeList[ind].rotation = 0
+                slotList[ind].running = false
+                that.$set(that.slotList[ind], 'running', false)
+                // sceneContainer.removeChild(planeTemp)
+                PIXI.tweenManager.removeTween(tw)
+                PIXI.tweenManager.removeTween(tweenList[rIndex])
+                sceneContainer.removeChild(amid)
+                runningPlanes.splice(rIndex, 1)
+                tweenList.splice(rIndex, 1)
+                trackIconList[that.total].texture = emptyIcon
+                that.total--
+                repeatFlag = true
+                if (that.step == 3) {
+                  if (handObj2 && handObj2.sprite) {
+                    return
+                  }
+                  handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 20, sceneContainer)
+                  handObj2.sprite.parentGroup = group3
+                  handObj2.tween.from({x: slotList[1].x}).to({x: slotList[0].x})
+                  handObj2.tween.time = 1600
+                  handObj2.tween.start()
+                  that.step++
+                }
+              })
+            }
+          }
+        })
+
+        app.ticker.add(delta => {
+          runningPlanes.forEach((item, index) => {
+            let leftX = canvasW - (canvasW - trackW) / 2
+            let leftY = canvasH / 2 - 20
+            let x = parseInt(item.x)
+            let y = parseInt(item.y)
+            if (x === xCoord[0]) {
+              item.rotation = 0;
+              item.moneyFlag = false;
+            } else if (x === xCoord[3]) {
+              if (Math.abs(item.x - leftX) <= 40 && Math.abs(item.y - leftY) <= 30 &&!item.moneyFlag) {
+                spillAction(40, 40, xCoord[3], winY, [configMarqee.coinUrl], configMarqee.coinEmitterConfig)
+                item.moneyFlag = true;
+                coinNum += that.addArr[item.pRank - 1]
+                coinSprite.text = coinNum
+                const tween = PIXI.tweenManager.createTween(keySprite)
+                tween.from({
+                  scale: {x: 0.8, y: 0.8}
+                });
+                tween.to({
+                  scale: {x: 1.2, y: 1.2}
+                });
+                tween.pingPong = true;
+                tween.time = 500;
+                tween.easing = PIXI.tween.Easing.inOutBack();
+                tween.loop = false;
+                tween.start();
+                tween.on('end', () => {
+                  tween.remove();
+                })
+              }
+              item.rotation = -Math.PI;
+            } else if (y === yCoord[3]) {
+              item.rotation = -Math.PI / 2;
+            } else if (y === startY) {
+              item.rotation = -Math.PI * 3 / 2;
+            } else if (y >= (yCoord[2]) && x <= (xCoord[1])) {//300,400
+              item.rotation = -Math.asin((y - (yCoord[2])) / airportR)
+            } else if (y >= (yCoord[2]) && x > (xCoord[2])) {
+              item.rotation = -Math.PI + Math.asin((y - (yCoord[2])) / airportR)
+            } else if (y <= (yCoord[1]) && x > (xCoord[2])) {//300,200
+              item.rotation = -Math.PI + Math.asin((y - (yCoord[1])) / airportR)
+            } else if (y <= (yCoord[1]) && x <= (xCoord[1])) {
+              item.rotation = -Math.asin((y - ((yCoord[1]))) / airportR)
+            } else {}
+          })
+        })
+      }
+      function getSuccess () {
+        app.stage.removeChild(sceneContainer)
+        that.status = 2
+        let bgSprite1 = new PIXI.Sprite.fromImage(that.isLandscape ? configMarqee.bgUrl2 : configMarqee.bgUrl)
+        bgSprite1.width = canvasW
+        bgSprite1.height = canvasH
+        app.stage.addChild(bgSprite1)
+        bgSprite1.parentGroup = group3
+        let rectangle = new PIXI.Graphics()
+        rectangle.beginFill(0x132127, 0.56)
+        rectangle.drawRect(0, 0, canvasW, canvasH)
+        bgSprite1.addChild(rectangle)
+        console.log(app, app.stage.width)
+        console.log(document.getElementsByTagName('canvas')[0].width)
+        let lightBg = new PIXI.Sprite.fromImage(configMarqee.successLightUrl)
+        lightBg.anchor.set(0.5)
+        let x2 = canvasW / 2
+        lightBg.x = x2
+        lightBg.y = canvasH / 2 - 40
+        lightBg.width = that.isPad ? 300 : 385
+        lightBg.height = that.isPad ? 300 : 385
+        bgSprite1.addChild(lightBg)
+        const light_tween = PIXI.tweenManager.createTween(lightBg)
+        light_tween.from({rotation: 0}).to({rotation: Math.PI * 2})
+        light_tween.loop = true
+        light_tween.time = 9000
+        light_tween.easing = PIXI.tween.Easing.linear()
+        light_tween.start()
+        let playBtnObj = that.isEnglish ? configMarqee.playBtnUrl : configMarqee['playBtnUrl_cn']
+        let downBtn = new PIXI.Sprite.fromImage(playBtnObj)
+        downBtn.anchor.set(0.5)
+        downBtn.x = lightBg.x
+        downBtn.y = that.isLandscape ? canvasH - 60 : canvasH - 200
+        downBtn.width = 208
+        downBtn.height = 66
+        downBtn.interactive = true
+        bgSprite1.addChild(downBtn)
+        downBtn.on('pointerdown', () => {
+          that.linkAppStore()
+        })
+        let box = new PIXI.Sprite.fromImage(configMarqee.successBoxUrl)
+        box.anchor.set(0.5)
+        box.x = x2
+        box.y = canvasH / 2 - 40
+        box.width = that.isPad ? 160 : 208
+        box.height = that.isPad ? 147 :191
+        box.interactive = true
+        box.on('pointerdown', () => {
+          that.linkAppStore()
+        })
+        bgSprite1.addChild(box)
+        const box_tween = PIXI.tweenManager.createTween(box)
+        box_tween.from({rotation: 0}).to({rotation: that.d2a(10)})
+        box_tween.pingPong = true
+        box_tween.loop = true
+        box_tween.time = 600
+        box_tween.easing = PIXI.tween.Easing.linear()
+        light_tween.start()
+        
+        let x1 = box.x + box.width / 2 - 40
+        let y1 = canvasH / 2 + 40
+        let hand = new PIXI.Sprite.fromImage(configMarqee.shakeHand)
+        bgSprite1.addChild(hand)
+        hand.width = 90
+        hand.height = 89
+        hand.x = x1
+        hand.y = y1
+        const hand_tween = PIXI.tweenManager.createTween(hand)
+        hand_tween.from({x: x1, y: y1}).to({x: x1 - 40, y: y1 - 50})
+        hand_tween.loop = true
+        hand_tween.pingPong = true
+        hand_tween.delay = 800
+        hand_tween.time = 1400
+        hand_tween.easing = PIXI.tween.Easing.linear()
+        box_tween.start()
+        box_tween.chain(hand_tween)
+        hand_tween.start()
+      }
+       /**
+       * 粒子动画
+       * @param w 容器宽度
+       * @param h 容器高
+       * @param x 容器坐标x
+       * @param y 容器坐标y
+       * @param imgArr 粒子动画所有图片
+       * @param config 粒子动画config
+       */
+      function spillAction (w = 100, h = 100, x, y, imgArr, config) {
+        let coinTank = new PIXI.Container();
+        coinTank.width = w;
+        coinTank.height = h;
+        coinTank.x = x;
+        coinTank.y = y;
+        app.stage.addChild(coinTank);
+        // Create a new emitter
+        let emitter = new PIXI.particles.Emitter(
+          coinTank,
+          [...imgArr.map(v => PIXI.Texture.fromImage(v))],
+          config
+        )
+        // Start emitting
+        emitter.emit = true;
+        emitter.playOnceAndDestroy(() => {
+          app.stage.removeChild(coinTank)
+        })
+      }
+    },
+    d2a(n) { //度数转弧数
+      return n * Math.PI / 180;
+    },
+    createHandTween (x, y, parentCont, propeArr) { // 创建手
+      let obj = {
+        sprite: '',
+        tween: ''
+      }
+      obj.sprite = new PIXI.Sprite.fromImage(configMarqee.shakeHand)
+      obj.sprite.anchor.set(0.5)
+      // obj.sprite.width = 62
+      // obj.sprite.height = 62
+      obj.sprite.name = 'hand1'
+      parentCont.addChild(obj.sprite)
+      obj.tween = PIXI.tweenManager.createTween(obj.sprite)
+      obj.sprite.x = x
+      obj.sprite.y = y
+      obj.sprite.scale.set(0.06)
+      obj.tween.from({scale: {x: 0.06,y: 0.06}})
+      obj.tween.to({
+        scale: {
+          x: 0.07,
+          y: 0.07
+        }
+      })
+      // obj.tween.delay = 1400
+      obj.tween.time = 800
+      obj.tween.loop = true
+      obj.tween.pingPong = true
+      obj.tween.easing = PIXI.tween.Easing.linear()
+      return obj
+    },
+    setWidth (sprite, w, h) {
+      sprite.width = w
+      sprite.height = h
+    },
+    getRandomNum (min, max) {
+      return Math.floor(Math.random() * (max - min + 1) + min)
+    },
+    linkAppStore() {
+      let url = this.iosLink;
+      let userAgent = navigator.userAgent || navigator.vendor;
+      if (/android/i.test(userAgent)) {
+        url = this.androidLink;
+      }
+      try {
+        // dapi.openStoreUrl();
+        // console.log('dapi open store')
+        mraid.open(url);          // ad平台【AdColony Applovin Vungle】
+        console.log('mraid open store')
+      } catch (err) {
+        console.error(err);
+        window.location = url;
+      }
+    }
+  }
+}
+</script>
+<style lang="scss">
+#paintPlane {
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+#planePath {
+  stroke-dasharray: 100;
+  animation: dash 5s linear;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: 1000;
+  }
+}
+</style>
+
