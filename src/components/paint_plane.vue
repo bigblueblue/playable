@@ -1,9 +1,9 @@
 /* eslint-disable */
 <template>
   <div id="paintPlane">
-    <svg version="1.0" id="planePath" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 414 736" enable-background="new 0 0 414 736" xml:space="preserve">
+    <!-- <svg version="1.0" id="planePath" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 414 736" enable-background="new 0 0 414 736" xml:space="preserve">
       <path fill="none" storke-width="8" stroke="#000000" stroke-miterlimit="10" d="M98.8,295.5c0,0,5,9.8,38,27c0,0,4.5,1.8,0,4.2l-6.2,3.1c0,0-3.3,2-5.2-4.2l-4.4-6c0,0-2.8-2.2-7.6,3.5c0,0-5.5,3-0.5,10.3c0,0,3.4,5.2,5.9,9.5c0,0-0.5,13.5,1.5,17.5c0,0,4.2,6.8-1.5,9.5c0,0-7.2,7.5,3.2,16.2c0,0,6.8,3.8,10.5,0c0,0,0.5-2,2.5,0c0,0,3.8,6.5,18.2,8.2c0,0-0.8,12.4,10.8,12.4c0,0,9.2-1.4,2-14.9l41-24c0,0,2.8-4,9.8,1.5c0,0,40.8,24.2,51.8,25.2c0,0,11.5,1.8,27.5-16c0,0,5.2-4.8-4.8-13l-30-30c0,0-3-1.2,1.8-4.2l21.5-19.8c0,0,1-3,6.5-0.2c0,0,15.5,9.2,22,0.2c0,0,8-6-2-12l-14-8c0,0-4.2,0-2.5-10.8c0,0,4.5-22.6-11.8-26c0,0-9.2-5.2-17.5,14.5l-9.8,1.5l-9-5.5c0,0-5-3-11.5-1c0,0-12.5,5.2-5,11c0,0,4.5,3.5-1,3.5c0,0-6.5-6.8-22-6.8c0,0-15.2,2.5-24.8,15.8l-50.5-14.2c0,0-7.5-2.8-17.8,3C114,276.8,91.6,288,98.8,295.5z"/>
-    </svg>
+    </svg> -->
   </div>
 </template>
 <script>
@@ -37,6 +37,7 @@ export default{
       isRun: false,
       durationTime: 3000,
       isPaint: false,
+      clickOnce: 0,
       isEnglish: true,
       toggleFlag: true, // 切屏的时候step为3时
       status: 0 // 0 表示转盘 1 表示跑道 2表示到成功页面了
@@ -78,10 +79,11 @@ export default{
           that.isLandscape = false
         }
         clearInterval(that.cleartimer)
-        console.log(that.status)
+        // console.log(that.status)
         if (!that.status) {
           that.isMarquee = true
-          that.firstGuid = true
+          console.log('切换了')
+          that.isPaint = false
           that.initPIXI()
         } else if (that.status == 1) {
           that.isMarquee = false
@@ -127,7 +129,6 @@ export default{
       var tweenList = [], trackContainer
       let canvas
       app = new PIXI.Application(canvasW, canvasH)
-      //app = PIXI.autoDetectRenderer(canvasW, canvasH)
       document.getElementById('paintPlane').appendChild(app.view)
       canvas = document.querySelector('#mergePlane canvas')
       if (document.body.clientWidth >= 414 * document.body.clientHeight / 736 && that.isLandscape) {
@@ -174,7 +175,6 @@ export default{
       logo.y = that.isLandscape ? canvasH - 60 : 160
       marqeeContainer.addChild(logo)
       let downObj = that.isEnglish ? configMarqee.downBtnUrl : configMarqee['downBtnUrl_cn']
-      console.log(downObj)
       let downBtn = new PIXI.Sprite.fromImage(downObj)
       downBtn.anchor.set(0.5)
       downBtn.width = 150 
@@ -194,14 +194,7 @@ export default{
         textureList2.push(text2)
       }
 
-      if (that.status == 1) {
-        currentIndex = that.rank
-        getNewPlane()
-        return
-      } else if (that.status == 2) {
-        getSuccess()
-        return
-      }
+      
 
 
       var planePath = new PIXI.Sprite.fromImage(configMarqee.planePath)
@@ -211,13 +204,23 @@ export default{
       marqeeContainer.addChild(planePath)
       planePath.x = canvasW / 2
       planePath.y = that.isLandscape ? canvasH / 2 : 368 + 60
+
+      if (that.status == 1) {
+        currentIndex = that.rank
+        getNewPlane()
+        return
+      } else if (that.status == 2) {
+        getSuccess()
+        return
+      }
+
       let baseX = that.isLandscape ? -160 : 0 //96, 
       let baseY = that.isLandscape ? 160 : -61 //290
       let ctx = new PIXI.tween.TweenPath()
       paintPic(ctx)
       ctx.closed = true
       let gShape = new PIXI.Graphics()
-      gShape.lineStyle(4, 0x0000000, 1)
+      gShape.lineStyle(4, 0xff0000, 1)
       gShape.drawPath(ctx)
       // marqeeContainer.addChild(gShape)
       let bgSprite2 = new PIXI.Sprite.fromImage(configMarqee.planePath)
@@ -247,39 +250,84 @@ export default{
       marqeeContainer.addChild(picPath)
       let paint = new PIXI.Graphics()
       paint.lineStyle(4, 0x000000, 1);
-      paint.moveTo(0, 0)
-      paint.lineTo(60, 100)
+      var totalH
+      marqeeContainer.addChild(paint)
       let paint2 = new PIXI.Sprite.from(paint.generateCanvasTexture())
       paint2.x = 99 - baseX;
       paint2.y = 336 - baseY
       paint2.anchor.set(1, 1)
       paint2.rotation = that.d2a(330)
-      marqeeContainer.addChild(paint2)
+      // marqeeContainer.addChild(paint2)
       let plane = new PIXI.Sprite.fromImage(configMarqee.planeList[1])
       plane.anchor.set(0.5)
-      plane.scale.set(0.2)   
-      paint2.addChild(plane)
-      console.log(ctx)
-      const paint_tween = PIXI.tweenManager.createTween(paint2)
+      plane.scale.set(0.2) 
+      plane.x = 99 - baseX;
+      plane.y = 336 - baseY  
+      marqeeContainer.addChild(plane)
+      plane.alpha = 0
+      const paint_tween = PIXI.tweenManager.createTween(plane)
       paint_tween.path = ctx
       paint_tween.time = 8000
       paint_tween.easing = PIXI.tween.Easing.linear()
       // paint_tween.loop = true
       paint_tween.on('start', () => {
+        console.log('开始啦')
+        that.isMarquee = that.isMarquee ? false : that.isMarquee
         that.isPaint = true
-        console.log(ctx)
+        console.log(plane.x, plane.y)
       })
       paint_tween.on('end', () => {
-        console.log(ctx)
+        console.log('是否结束了', that.isMarquee, plane.x, 99 - baseX, that.isLandscape)
+        if (that.isLandscape) {
+          if (plane.x != 259) {return}
+        } else {
+          if (plane.x != 99) {return}
+        }
+        paint.clear()
+        paint.lineStyle(4, 0x000000, 1);
+        paint.moveTo(plane.x, plane.y)
+        paint.lineTo(plane.x, plane.y)
         that.isPaint = false
-        // getNewPlane()
+        getNewPlane()
         spillAction(canvasW, canvasH, planePath.x, planePath.y, [configMarqee.ribbonList[0], configMarqee.ribbonList[1], configMarqee.ribbonList[2]], configMarqee.ribbonEmitterConfig)
       })
       app.stage.interactive = true
-      app.stage.on('pointerdown', () => {
+      app.stage.on('pointerdown', onDragStart)
+      app.stage.on('pointerup', onDragEnd)
+      function onDragStart (event) {
+        if (event.data.global.x > planePath.x) {
+          totalH = 128
+        } else {
+          totalH = 130
+        }
+        paint.moveTo(99 - baseX - totalH, 336 - baseY - totalH)
+        paint.lineTo(99 - baseX, 336 - baseY)
+      }
+      function onDragEnd () {
         paint_tween.start()
-      })
+      }
       
+      var count = 0, times = 0
+      app.ticker.add(delta => {
+        PIXI.tweenManager.update()
+        if (!that.isPaint) {return}
+        count += 2
+        if (count >= 3) {
+          brush.position.copy(plane)
+          app.renderer.render(brush, renderTexture, false, null, false)
+          if (count >= 140 && count < 402) {
+            totalH++
+          } else if (count >= 402){
+            totalH--
+          }
+          console.log(totalH)
+          paint.clear()
+          paint.lineStyle(4, 0x000000, 1);
+          paint.moveTo(plane.x - totalH, plane.y - totalH)
+          paint.lineTo(plane.x, plane.y)
+        }
+      })
+
       function paintPic (ctx) {
         ctx.moveTo(99 - baseX,336 - baseY);
         ctx.bezierCurveTo(88 - baseX,328 - baseY,127 - baseX,306 - baseY,112 - baseX,316 - baseY);
@@ -315,51 +363,33 @@ export default{
         ctx.moveTo(282 - baseX,429 - baseY);
         ctx.bezierCurveTo(272 - baseX,435 - baseY,251 - baseX,430 - baseY,264 - baseX,432 - baseY);
         ctx.moveTo(264 - baseX,431 - baseY);
-        ctx.bezierCurveTo(251 - baseX,429 - baseY,204 - baseX,406 - baseY,210 - baseX,405 - baseY);
+        ctx.bezierCurveTo(251 - baseX,429 - baseY,204 - baseX,402 - baseY,210 - baseX,405 - baseY);
         ctx.moveTo(210 - baseX,405 - baseY);
         ctx.bezierCurveTo(204 - baseX,410 - baseY,172 - baseX,428 - baseY,167 - baseX,430 - baseY);
         ctx.moveTo(167 - baseX,430 - baseY);
         ctx.bezierCurveTo(173 - baseX,441 - baseY,154 - baseX,446 - baseY,164 - baseX,445 - baseY);
         ctx.moveTo(164 - baseX,445 - baseY);
-        ctx.bezierCurveTo(154 - baseX,445 - baseY,133 - baseX,430 - baseY,151 - baseX,434 - baseY);
+        ctx.bezierCurveTo(154 - baseX,445 - baseY,150 - baseX,430 - baseY,151 - baseX,434 - baseY);
         ctx.moveTo(151 - baseX,434 - baseY);
-        ctx.bezierCurveTo(133 - baseX,430 - baseY,127 - baseX,429 - baseY,133 - baseX,422 - baseY);
-        ctx.moveTo(133 - baseX,422 - baseY);
+        ctx.bezierCurveTo(133 - baseX,430 - baseY,127 - baseX,429 - baseY,136 - baseX,422 - baseY);
+        ctx.moveTo(136 - baseX,422 - baseY);
         ctx.bezierCurveTo(127 - baseX,429 - baseY,110 - baseX,423 - baseY,122 - baseX,425 - baseY);
         
-        ctx.moveTo(122- baseX,426 - baseY);
+        ctx.moveTo(122- baseX,425 - baseY);
         ctx.quadraticCurveTo(110 - baseX,422 - baseY, 116 - baseX, 411 - baseY);
         ctx.moveTo(116 - baseX, 411 - baseY);
         ctx.quadraticCurveTo(116 - baseX,398 - baseY, 122 - baseX, 403 - baseY);
         ctx.moveTo(122 - baseX, 403 - baseY);
         ctx.quadraticCurveTo(116 - baseX,398 - baseY, 118 - baseX, 382 - baseY);
-        ctx.moveTo(113 - baseX,373 - baseY);
+        ctx.moveTo(118 - baseX,373 - baseY);
         ctx.bezierCurveTo(105 - baseX,360 - baseY,124 - baseX,354 - baseY,116 - baseX,360 - baseY);
         ctx.moveTo(116 - baseX, 360 - baseY);
         ctx.quadraticCurveTo(123 - baseX,353 - baseY, 128 - baseX, 369 - baseY);
         ctx.moveTo(128 - baseX, 369 - baseY);
-        ctx.quadraticCurveTo(113 - baseX,348 - baseY, 138 - baseX, 362 - baseY);
-        ctx.lineTo(138 - baseX,362 - baseY)
-        ctx.moveTo(138 - baseX,362 - baseY);
-        ctx.bezierCurveTo(112 - baseX,347 - baseY,88 - baseX,328 - baseY,99 - baseX,336 - baseY);
+        ctx.quadraticCurveTo(134 - baseX,370 - baseY, 141 - baseX, 362 - baseY);
+        ctx.moveTo(141 - baseX,362 - baseY);
+        ctx.bezierCurveTo(134 - baseX,370 - baseY,106 - baseX,330 - baseY,99 - baseX,336 - baseY);
       }
-      var count = 0, totalH = paint2.height, times = 0
-      app.ticker.add(delta => {
-        PIXI.tweenManager.update()
-        if (!that.isPaint) {
-          return
-        }
-        count += 2
-        if (count >= 3) {
-          brush.position.copy(paint2)
-          app.renderer.render(brush, renderTexture, false, null, false)
-          // paint.clear()
-          // paint.lineStyle(4, 0x000000, 1);
-          // paint.moveTo(0, 0)
-          // paint.lineTo(60, 100)
-        }
-      })
-
       function dropRibbon () {
         let sprites = new PIXI.particles.ParticleContainer(6, {
           scale: true,
@@ -494,7 +524,7 @@ export default{
           fontWeight: 'bold',
           fontSize: that.isLandscape ? 36 : 40,
           fontFamily: 'Arial',
-          fill: '0xFFDF18'
+          fill: '0xE26C33'
         })
         coinSprite.x = that.isLandscape ? 60 : 70
         coinSprite.y = 10
