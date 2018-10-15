@@ -404,7 +404,7 @@ export default{
           return
         }
         if (!that.isPaint) {return}
-        console.log(totalH)
+        // console.log(totalH)
         count += 2
         totalH = totalH < 0 ? Math.abs(totalH) : totalH
         if (that.isPaint) { // 画画
@@ -932,7 +932,7 @@ export default{
           plane_tween.easing = PIXI.tween.Easing.outBack()
           plane_tween.start()
         }
-
+        play(plane)
         if (that.step == 1) { // 指引合并 --- 指引到跑道 --- 指引返回
           handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 35, sceneContainer)
           handObj2.sprite.parentGroup = group3
@@ -975,7 +975,6 @@ export default{
             dropGift('', that.rank)
           }, 2800)
         } else {}
-        play(plane)
       }
       
 
@@ -994,6 +993,7 @@ export default{
         }
         function onDragEnd (event) {
           if (!this.dragging) {return}
+          // debugger
           this.alpha = 1
           let moveI = this.pIndex
           let endI = findCloser(this.x, this.y, 40, moveI)
@@ -1070,48 +1070,48 @@ export default{
               this.x = that.oldPosition.x
               this.y = that.oldPosition.y
             } else {  // 挪动飞机
-              if (that.step < 4) {
+              if (that.step < 5) {
                 this.x = that.oldPosition.x
                 this.y = that.oldPosition.y
-                return
+              } else {
+                this.x = slotList[endI].x
+                this.y = slotList[endI].y
+                planeObj2.pIndex = endI
+                planeList[endI] = planeObj2
+                planeList[moveI] = {}
+                that.$set(that.planeList, moveI, {})
+                that.$set(that.planeList, endI, planeObj2)
+                slotList[endI].occpuied = true
+                slotList[endI].rank = moveRank
+                slotList[moveI].rank = 0
+                slotList[moveI].occpuied = false
+                that.$set(that.slotList[endI], 'occpuied', true)
+                that.$set(that.slotList[endI], 'rank', moveRank)
+                that.$set(that.slotList[moveI], 'rank', 0)
+                that.$set(that.slotList[moveI], 'occpuied', false)
               }
-              this.x = slotList[endI].x
-              this.y = slotList[endI].y
-              planeObj2.pIndex = endI
-              planeList[endI] = planeObj2
-              planeList[moveI] = {}
-              that.$set(that.planeList, moveI, {})
-              that.$set(that.planeList, endI, planeObj2)
-              slotList[endI].occpuied = true
-              slotList[endI].rank = moveRank
-              slotList[moveI].rank = 0
-              slotList[moveI].occpuied = false
-              that.$set(that.slotList[endI], 'occpuied', true)
-              that.$set(that.slotList[endI], 'rank', moveRank)
-              that.$set(that.slotList[moveI], 'rank', 0)
-              that.$set(that.slotList[moveI], 'occpuied', false)
             }
           } else {
             if (Math.abs(this.x - trackIconList[3].x) < 30) { // 可以上轨道
-              if (that.step < 2 && that.step == 3) {
+              if (that.step != 2 && that.step < 5) { //step 为2 和 >= 5
                 this.x = that.oldPosition.x
                 this.y = that.oldPosition.y
-                return
-              }
-              this.x = trackIconList[0].x + 12
-              // 跑
-              if (handObj2 && handObj2.sprite && !that.isFirst) {
-                sceneContainer.removeChild(handObj2.sprite)
-                that.step++
-                addMoney (moveI, moveRank)
-                if (slotList[1].running) {
-                  dropGift(0, moveRank)
-                } else {
-                  dropGift(1, moveRank)
-                }
-                that.isFirst = true
               } else {
-                addMoney (moveI, moveRank)
+                this.x = trackIconList[0].x + 12
+                // 跑
+                if (handObj2 && handObj2.sprite && !that.isFirst) {
+                  sceneContainer.removeChild(handObj2.sprite)
+                  that.step++
+                  addMoney (moveI, moveRank)
+                  if (slotList[1].running) {
+                    dropGift(0, moveRank)
+                  } else {
+                    dropGift(1, moveRank)
+                  }
+                  that.isFirst = true
+                } else {
+                  addMoney (moveI, moveRank)
+                }
               }
             } else {
               this.x = that.oldPosition.x
