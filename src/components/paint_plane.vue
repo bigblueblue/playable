@@ -325,8 +325,8 @@ export default{
         }
       })
       hand.parentGroup = group2
-      let guidTxt = new PIXI.Text('hold and release', {
-        fontFamily: 'NumFont',
+      let guidTxt = new PIXI.Text('Hold then release', {
+        fontFamily: 'Arial',
         fontSize: 22,
         align: 'center',
         fill: '0x3070ab'
@@ -352,9 +352,9 @@ export default{
         that.clickFlag = true
         that.isBigger = true
         if (event.data.global.x > planePath.x) {
-          totalH = 354
+          totalH = 342
         } else {
-          totalH = 354
+          totalH = 342
         }
         that.clickOnce = true
       }
@@ -392,7 +392,6 @@ export default{
               shiningBall()
             }
             times++
-            
           }
           hand.scale.set(cick)
         }
@@ -935,7 +934,7 @@ export default{
         }
 
         if (that.step == 1) { // 指引合并 --- 指引到跑道 --- 指引返回
-          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 30, sceneContainer)
+          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 35, sceneContainer)
           handObj2.sprite.parentGroup = group3
           handObj2.tween.from({x: slotList[1].x}).to({x: slotList[0].x})
           handObj2.tween.time = 1600
@@ -959,13 +958,13 @@ export default{
             PIXI.tweenManager.removeTween(handObj2.tween)
             handObj2 = {}
           }
-          handObj2 = that.createHandTween(slotList[i].x + 10, slotList[i].y + 30, sceneContainer)
+          handObj2 = that.createHandTween(slotList[i].x + 10, slotList[i].y + 35, sceneContainer)
           handObj2.tween.start()
         } else if (that.step == 4) {
           if (handObj2 && handObj2.sprite) {
             return
           }
-          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 20, sceneContainer)
+          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 35, sceneContainer)
           handObj2.sprite.parentGroup = group3
           handObj2.tween.from({x: slotList[1].x}).to({x: slotList[0].x})
           handObj2.tween.time = 1600
@@ -1153,6 +1152,7 @@ export default{
         planeShadow.anchor.set(0.5)
         // planeShadow.parentGroup = group1
         planeShadow.alpha = 0.7
+        planeShadow.clickFlag = false
         planeShadow.pRank = rank
         planeShadow.pIndex = moveI
         planeShadow.x = slotList[moveI].x
@@ -1190,6 +1190,7 @@ export default{
           planeShadow.on('pointerdown', returnBack)
           function returnBack (event) {
             let amid = event.target.parent
+            if (amid.clickFlag) {return}
             let ind = this['pIndex'], rank = this['pRank']
             let endX = slotList[ind].x
             let endY = slotList[ind].y
@@ -1235,14 +1236,16 @@ export default{
                 sceneContainer.removeChild(amid)
                 runningPlanes.splice(rIndex, 1)
                 tweenList.splice(rIndex, 1)
-                trackIconList[that.total].texture = emptyIcon
-                that.total--
+                // if (that.total >= 0) {
+                  trackIconList[that.total].texture = emptyIcon
+                  that.total--
+                // }
                 repeatFlag = true
                 if (that.step == 3) {
                   if (handObj2 && handObj2.sprite) {
                     return
                   }
-                  handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 20, sceneContainer)
+                  handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 35, sceneContainer)
                   handObj2.sprite.parentGroup = group3
                   handObj2.tween.from({x: slotList[1].x}).to({x: slotList[0].x})
                   handObj2.tween.time = 1600
@@ -1250,6 +1253,7 @@ export default{
                   that.step++
                 }
               })
+              amid.clickFlag = true
             }
           }
         })

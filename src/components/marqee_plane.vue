@@ -306,12 +306,12 @@ export default{
         getStart(circle_tween, rounds, degrees, rotationTime)
       })
 
-      // marqeeContainer.visible = false
-      // currentIndex = 4
-      // that.rank = currentIndex
-      // that.status = 1
-      // // getSuccess()
-      // getNewPlane()
+      marqeeContainer.visible = false
+      currentIndex = 4
+      that.rank = currentIndex
+      that.status = 1
+      // getSuccess()
+      getNewPlane()
       function getStart (tw, rounds, degrees, rotationTime) {
         tw.from({rotation: 0}).to({rotation: that.d2a(360 * rounds + degrees)})
         tw.easing = PIXI.tween.Easing.outCubic()
@@ -548,8 +548,8 @@ export default{
         
         let gPath = new PIXI.Graphics();
         gPath.lineStyle(9, 0xfffffff, 1);
-        gPath.drawPath(path);
-        // sceneContainer.addChild(gPath);
+        // gPath.drawPath(path);
+        sceneContainer.addChild(gPath);
 
         keySprite = new PIXI.Sprite.fromImage(configMarqee.keyUrl)
         keySprite.anchor.set(0.5)
@@ -802,6 +802,7 @@ export default{
             handObj2 = {}
           }
           handObj2 = that.createHandTween(slotList[i].x + 10, slotList[i].y + 30, sceneContainer)
+          handObj2.sprite.parentGroup = group3
           handObj2.tween.start()
         } else if (that.step == 4) {
           if (handObj2 && handObj2.sprite) {
@@ -837,6 +838,7 @@ export default{
         }
         function onDragEnd (event) {
           if (!this.dragging) {return}
+          // debugger
           this.alpha = 1
           let moveI = this.pIndex
           let endI = findCloser(this.x, this.y, 40, moveI)
@@ -913,7 +915,7 @@ export default{
               this.x = that.oldPosition.x
               this.y = that.oldPosition.y
             } else {  // 挪动飞机
-              if (that.step < 4) {
+              if (that.step < 5) {
                 this.x = that.oldPosition.x
                 this.y = that.oldPosition.y
                 return
