@@ -143,12 +143,12 @@ export default{
       app = new PIXI.Application(canvasW, canvasH)
       document.getElementById('paintPlane').appendChild(app.view)
       canvas = document.querySelector('#mergePlane canvas')
-      if (document.body.clientWidth >= 414 * document.body.clientHeight / 736 && that.isLandscape) {
-        app.renderer.view.style.height = 736 * document.body.clientHeight / 414
-        app.renderer.view.style.width = '100%'
-      } else {
+      if (document.body.clientWidth >= canvasW * document.body.clientHeight / canvasH) {
         app.renderer.view.style.height = '100%'
-        app.renderer.view.style.width = 414 * document.body.clientHeight / 736
+        app.renderer.view.style.width = canvasW * document.body.clientHeight / canvasH
+      } else {
+        app.renderer.view.style.height = canvasH * document.body.clientHeight / canvasW
+        app.renderer.view.style.width = '100%'
       }
       app.renderer.autoResize = true
       app.stage = new PIXI.display.Stage()
