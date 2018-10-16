@@ -32,7 +32,7 @@ export default{
       slotList: [{}, {}, {}, {}],
       planeList: [],
       isRun: false,
-      nailRun: true,
+      hammmerRun: true,
       isEnglish: true,
       clickFlag:  false,  //是否有指示闪动，点击就没有
       toggleFlag: true, // 切屏的时候step为3时
@@ -132,10 +132,16 @@ export default{
       var emptyIcon = PIXI.Texture.fromImage(configMarqee.rankEmptyUrl), coinNum = 0, coinSprite
       var fullIcon = PIXI.Texture.fromImage(configMarqee.rankFillUrl), runningPlanes = [] , planeTemp, trackIconList = [] //new Array(6).fill({})
       var tweenList = [], trackContainer
-      var nailList = [], blFrameList = [], hammer
-      const leanDegree = 45
+      var nailList = [], blFrameList = [], hammer, noNail, newTexture
+      var beginY // 锤子初始y
+      const leanDegree = -45
       let canvas
-      app = new PIXI.Application(canvasW, canvasH)
+      app = new PIXI.Application({
+        width: canvasW,
+        height: canvasH,
+        forceCanvas: true
+      })
+      // app = new PIXI.Application(canvasW, canvasH)
       document.getElementById('mergeplaneNail').appendChild(app.view)
       canvas = document.querySelector('#mergePlane canvas')
       if (document.body.clientWidth >= canvasW * document.body.clientHeight / canvasH) {
@@ -199,7 +205,7 @@ export default{
       downBtn.on('pointerdown', () => {
         that.linkAppStore()
       })
-      var textureList1 = [], textureList2 = []
+      var textureList1 = [], textureList2 = [], selfNailIndex = ''
       for (let i = 0; i < 8; i++) { // 轨道上的飞机
         let text1 = PIXI.Texture.fromImage(configMarqee.planeList[i])
         let text2 = PIXI.Texture.fromImage(configMarqee.trackList[i])
@@ -210,48 +216,58 @@ export default{
       let eqFlag = false, maxX = canvasW + 40, minX = 120
       app.stage.interactive = true
       app.buttonMode = true
-      app.stage.on('pointerdown', () => {
-        that.nailRun = false
+      app.stage.on('pointerdown', () => { // 锤下去
+        that.hammmerRun = false
+        driveNail()
       })
-
-
-
+      let nailRun = false, nailCount = 0 // 钉子是否可以动画
       app.ticker.add(delta => {
-        if (!that.nailRun) {return}
-        if (eqFlag) { //300 ------- 100 ------ 300 默认减少
-          if (hammer.x >= maxX) {
-            eqFlag = false
+        PIXI.tweenManager.update()
+        if (nailCount >= 131) {
+          nailRun = false
+        }
+        if (that.hammmerRun) { // 锤子挪动
+          if (eqFlag) { //300 ------- 100 ------ 300 默认减少
+            if (hammer.x >= maxX) {
+              eqFlag = false
+            } else {
+              hammer.x += delta * 3
+            }
           } else {
-            hammer.x += delta * 3
-          }
-        } else {
-          if (hammer.x <= minX) {
-            eqFlag = true
-          } else {
-            hammer.x -= delta * 3
+            if (hammer.x <= minX) {
+              eqFlag = true
+            } else {
+              hammer.x -= delta * 3
+            }
           }
         }
-        console.log(hammer.x)
+        if (nailRun) { // 钉子运动
+          nailCount += 3
+          nailAnimate(selfNailIndex, 140 - nailCount)
+        }
       })
 
       function layThings () { // 布置钉子奖品等
-        let nailTexture = PIXI.Texture.fromImage(configMarqee.nailUrl)
-        let blFrameTexture = PIXI.Texture.fromImage(configMarqee.blackUrl)
+        noNail = new PIXI.Texture.from(configMarqee.nailUrl)  // 礼物盒遮罩
+        noNail.baseTexture.width = 38 // 设置值了就不会报错 frame 
+        noNail.baseTexture.height = 140
+        console.log(noNail)
+        let rect = new PIXI.Rectangle(0, 0, 38, 140)
+        noNail.frame = rect
+        newTexture = new PIXI.Texture(noNail.baseTexture, noNail.frame);
+        let blFrameTexture = PIXI.Texture.fromImage(configMarqee.blackUrl) //飞机外层的黑框
         for (let m = 0; m < 3; m++) { // 钉子
-          let nail = new PIXI.Sprite(nailTexture)
-          nail.anchor.set(0.5, 1)
-          nail.x = canvasW / 6 * (2 * m + 1) // 1 3 5
-          nail.y = desk.y - desk.height + 50
-          nail.width = 38
-          nail.height = 140
+          let nail = new PIXI.Sprite.from(newTexture)
+          nail.x = (canvasW / 6) * (2 * m + 1) - 19// 1 3 5
+          nail.y = desk.y - desk.height + 50 - 140
           nailList.push(nail)
           marqeeContainer.addChild(nail)
-
+          console.log(nail.x, nail.y, nail.anchor)
           let blFrame = new PIXI.Sprite(blFrameTexture)
           blFrame.width = 112
           blFrame.height = 133
           blFrame.anchor.set(0.5, 0)
-          blFrame.x = nail.x
+          blFrame.x = nail.x + 19
           blFrame.y = canvasH - blFrame.height - 10
           blFrameList.push(blFrame)
           marqeeContainer.addChild(blFrame)
@@ -266,14 +282,63 @@ export default{
         hammer = new PIXI.Sprite.fromImage(configMarqee.hammerUrl) 
         hammer.anchor.set(0.5, 1)
         hammer.x = canvasW - 100
-        hammer.y = nailList[0].y - nailList[0].height - 50
+        beginY = nailList[0].y - 50
+        hammer.y = beginY
         hammer.width = 90
         hammer.height = 156
-        hammer.rotation = that.d2a(-leanDegree)
+        hammer.rotation = that.d2a(leanDegree)
         marqeeContainer.addChild(hammer)
       }
-      
+      function driveNail () {
+        const hammer_tw1 = PIXI.tweenManager.createTween(hammer)
+        hammer_tw1.from({rotation: that.d2a(leanDegree)}).to({rotation: that.d2a(leanDegree + 30)})
+        hammer_tw1.time = 400
+        hammer_tw1.easing = PIXI.tween.Easing.outBack()
 
+        const hammer_tw2 = PIXI.tweenManager.createTween(hammer)
+        hammer_tw2.from({
+          y: beginY,
+          rotation: that.d2a(leanDegree + 30)
+        }).to({
+          y: beginY + 10,
+          rotation: that.d2a(-90)
+        })
+        hammer_tw2.time = 800
+        hammer_tw2.easing = PIXI.tween.Easing.outBack()
+        
+        const hammer_tw3 = PIXI.tweenManager.createTween(hammer)
+        hammer_tw3.from({y: beginY }).to({y: beginY + 140})
+        hammer_tw3.time = 1200
+        hammer_tw3.easing = PIXI.tween.Easing.outBack()
+
+        hammer_tw1.start()
+        hammer_tw1.chain(hammer_tw2).chain(hammer_tw3)
+        hammer_tw2.on('end', () => {
+          console.log('开始锤啦')
+          selfNailIndex = nailList.findIndex(item => { // 是否有锤子钉子的
+            return Math.abs(item.x - (hammer.x - hammer.height)) <= 28
+          })
+          const nail_tw = PIXI.tweenManager.createTween(nailList[selfNailIndex])
+          nail_tw.from({y: beginY }).to({y: beginY + 140})
+          nail_tw.time = 400
+          nail_tw.easing = PIXI.tween.Easing.outBack()
+          if (selfNailIndex > -1) {
+            nailRun = true
+            nail_tw.start()
+          }
+        })
+        
+      }
+      function nailAnimate (i, h){  // 钉子动画
+        if(h >= 131){
+          h = 131
+        }
+        noNail = new PIXI.Texture.from(configMarqee.nailUrl)  // 礼物盒遮罩
+        let rect = new PIXI.Rectangle(0, 0, 38, h)
+        noNail.frame = rect
+        newTexture = new PIXI.Texture(noNail.baseTexture, noNail.frame);
+        nailList[i].texture = newTexture
+      }
     
 
 
