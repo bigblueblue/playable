@@ -398,11 +398,9 @@ export default{
         anim.play();
         anim.loop = false
         marqeeContainer.addChild(anim);
-        console.log(anim)
         anim.onComplete = function () {
           anim.stop()
           marqeeContainer.removeChild(anim)
-          console.log('eee')
         }
         lightBoomFlag = 2
       }
@@ -454,7 +452,6 @@ export default{
           knockAnimate()
         }
         if (frameFlag) { //  飞机外层黑框
-          console.log(hidden.x, hidden.y)
           brush.position.copy(hidden)
           app.renderer.render(brush, renderTexture, false, null, false)
         }
