@@ -32,9 +32,9 @@ export default{
       slotList: [{}, {}, {}, {}],
       planeList: [],
       isRun: false,
+      durationTime: 3000,
       hammmerRun: true,
       isEnglish: true,
-      clickFlag:  false,  //是否有指示闪动，点击就没有
       toggleFlag: true, // 切屏的时候step为3时
       status: 0 // 0 表示转盘 1 表示跑道 2表示到成功页面了
     }
@@ -86,9 +86,7 @@ export default{
         if (!that.status) {
           that.isMarquee = true
           console.log('切换了')
-          that.isPaint = false
-          that.clickOnce = false
-          that.clickFlag = false
+          that.hammmerRun = true
           that.initPIXI()
         } else if (that.status == 1) {
           that.isMarquee = false
@@ -123,7 +121,9 @@ export default{
       //从上到下
       const yCoord = [startY, startY + airportR, airportH + startY - airportR, airportH + startY];
       const winY = startY + airportH / 2
-      
+      const nailW = that.isLandscape ? 30 : 38
+      const nailH = that.isLandscape ? 110 : 140
+      const closeH = that.isLandscape ? 36 : 50
       const outRadius = 180 // 转盘外半径
       const inRadius = 124 // 转盘内半径
       const spinCopies = 6
@@ -132,16 +132,16 @@ export default{
       var emptyIcon = PIXI.Texture.fromImage(configMarqee.rankEmptyUrl), coinNum = 0, coinSprite
       var fullIcon = PIXI.Texture.fromImage(configMarqee.rankFillUrl), runningPlanes = [] , planeTemp, trackIconList = [] //new Array(6).fill({})
       var tweenList = [], trackContainer
-      var nailList = [], blFrameList = [], hammer, noNail, newTexture
+      var nailList = [], blFrameList = [], hammer, noNail, newTexture, hidden, giftList = [], renderTexture
       var beginY // 锤子初始y
       const leanDegree = -45
       let canvas
-      app = new PIXI.Application({
-        width: canvasW,
-        height: canvasH,
-        forceCanvas: true
-      })
-      // app = new PIXI.Application(canvasW, canvasH)
+      // app = new PIXI.Application({
+      //   width: canvasW,
+      //   height: canvasH,
+      //   forceCanvas: true
+      // })
+      app = new PIXI.Application(canvasW, canvasH)
       document.getElementById('mergeplaneNail').appendChild(app.view)
       canvas = document.querySelector('#mergePlane canvas')
       if (document.body.clientWidth >= canvasW * document.body.clientHeight / canvasH) {
@@ -162,7 +162,7 @@ export default{
       app.stage.addChild(new PIXI.display.Layer(group2))
       app.stage.addChild(new PIXI.display.Layer(group3))
       let prizeList = []
-      let startIndex = 1, endIndex, rounds, degrees, rotationTime, isBegin = false, currentIndex = 0, clearTime
+      let startIndex = 1, endIndex, rounds, degrees, rotationTime, isBegin = false, clearTime
       let isFirst = true, beginndex
       const rotaDegreeList = [0, 180, 300, 360, 60]
       let addY = that.isLandscape ? 0 : 60
@@ -183,47 +183,232 @@ export default{
       desk.x = 0
       desk.y = canvasH
       desk.width = canvasW
-      desk.height = 237
+      desk.height = that.isLandscape ? 170 : 237
       marqeeContainer.addChild(desk)
+      let brush = new PIXI.Graphics()
+      brush.beginFill(0xffffff);
+      brush.drawCircle(0, 0, 20);
+      brush.endFill(); 
+
       let logoObj = that.isEnglish ? configMarqee.logoUrl : configMarqee['logoUrl_cn']
       let logo = new PIXI.Sprite.fromImage(logoObj)
       logo.anchor.set(0.5)
       logo.width = that.isEnglish ? 103 : 123
       logo.height = 73
-      logo.x = that.isLandscape ? 100 : canvasW / 2
-      logo.y = that.isLandscape ? canvasH - 60 : 60
+      logo.x = that.isLandscape ? 60 : canvasW / 2
+      logo.y = that.isLandscape ? 50 : 60
       marqeeContainer.addChild(logo)
       let downObj = that.isEnglish ? configMarqee.downBtnUrl : configMarqee['downBtnUrl_cn']
       let downBtn = new PIXI.Sprite.fromImage(downObj)
       downBtn.anchor.set(0.5)
       downBtn.width = 150 
       downBtn.height = that.isEnglish ? 65 : 45
-      downBtn.x = that.isLandscape ? canvasW - 90 : canvasW / 2
-      downBtn.y = that.isLandscape ? canvasH - 45 : 136
+      downBtn.x = that.isLandscape ? canvasW - 80 : canvasW / 2
+      downBtn.y = that.isLandscape ? 55 : 136
       downBtn.interactive = true
       marqeeContainer.addChild(downBtn)
       downBtn.on('pointerdown', () => {
         that.linkAppStore()
       })
-      var textureList1 = [], textureList2 = [], selfNailIndex = ''
-      for (let i = 0; i < 8; i++) { // 轨道上的飞机
-        let text1 = PIXI.Texture.fromImage(configMarqee.planeList[i])
-        let text2 = PIXI.Texture.fromImage(configMarqee.trackList[i])
+      var textureList1 = [], textureList2 = [],  currentIndex =  -1, anim //
+      for (let i = 0; i < 5; i++) { // 轨道上的飞机
+        let text1 = PIXI.Texture.fromImage(configMarqee.highPlaneList[i])
+        let text2 = PIXI.Texture.fromImage(configMarqee.highTrackList[i])
         textureList1.push(text1)
         textureList2.push(text2)
       }
       layThings()
-      let eqFlag = false, maxX = canvasW + 40, minX = 120
+
       app.stage.interactive = true
       app.buttonMode = true
       app.stage.on('pointerdown', () => { // 锤下去
         that.hammmerRun = false
         driveNail()
       })
-      let nailRun = false, nailCount = 0 // 钉子是否可以动画
+      let eqFlag = false, maxX = that.isLandscape ? canvasW : canvasW + 100, minX = that.isLandscape ? 0 : 120
+      let nailRun = false, nailCount = 0, nailFlag = true // 钉子是否可以动画
+      let frameFlag = false, lightBoomFlag = 0
+      
+      
+
+      function layThings () { // 布置钉子奖品等
+        noNail = new PIXI.Texture.from(configMarqee.nailUrl)  // 礼物盒遮罩
+        noNail.baseTexture.width = nailW // 设置值了就不会报错 frame 
+        noNail.baseTexture.height = nailH
+        console.log(noNail)
+        let rect = new PIXI.Rectangle(0, 0, nailW, nailH)
+        noNail.frame = rect
+        newTexture = new PIXI.Texture(noNail.baseTexture, noNail.frame);
+        let blFrameTexture = PIXI.Texture.fromImage(configMarqee.blackUrl) //飞机外层的黑框
+        for (let m = 0; m < 3; m++) { // 钉子
+          let nail = new PIXI.Sprite.from(newTexture)
+          nail.x = (canvasW / 6) * (2 * m + 1) - nailW / 2// 1 3 5
+          nail.y = desk.y - desk.height + closeH - nailH
+          nailList.push(nail)
+          marqeeContainer.addChild(nail)
+          console.log(nail.x, nail.y, nail.anchor)
+          let blFrame = new PIXI.Sprite(blFrameTexture)
+          blFrame.width = that.isLandscape ? 100 : 112
+          blFrame.height = that.isLandscape ? 110 : 133
+          blFrame.anchor.set(0.5, 0)
+          blFrame.x = nail.x + nailW / 2
+          blFrame.y = that.isLandscape ? canvasH - blFrame.height : canvasH - blFrame.height - 10
+          blFrameList.push(blFrame)
+          marqeeContainer.addChild(blFrame)
+          let plane = new PIXI.Sprite.fromImage(configMarqee.goodsList[m])
+          plane.scale.set(0.9)
+          plane.anchor.set(0.5)
+          plane.x = 0
+          plane.y = that.isLandscape ? blFrame.height / 2 + 20 : blFrame.height / 2 + 8
+          blFrame.addChild(plane)
+          giftList.push(plane)
+        }
+        // 锤子
+        hammer = new PIXI.Sprite.fromImage(configMarqee.hammerUrl) 
+        hammer.anchor.set(0.5, 1)
+        hammer.x = canvasW - 100
+        beginY = that.isLandscape ? nailList[0].y - 40 : nailList[0].y - 50
+        hammer.y = beginY
+        hammer.width = that.isLandscape ? 75 : 90
+        hammer.height = that.isLandscape ? 130 : 156
+        hammer.rotation = that.d2a(leanDegree)
+        marqeeContainer.addChild(hammer)
+      }
+      function driveNail () {
+        // let baseX = 0, baseY = 0
+        let path = new PIXI.tween.TweenPath()
+        path.arc(hammer.x, hammer.y, hammer.height, that.d2a(180 + 45), that.d2a(360 - 90 - 15),  false)
+        path.arc(hammer.x, hammer.y, hammer.height, that.d2a(360 - 90 - 15), that.d2a(180),  true)
+        path.lineTo(hammer.x - hammer.height, beginY + 140)
+        var gPath = new PIXI.Graphics();
+        gPath.lineStyle(10, 0xffffff, 1);
+        gPath.drawPath(path);
+        // marqeeContainer.addChild(gPath);
+        const hammer_tw1 = PIXI.tweenManager.createTween(hammer)
+        hammer_tw1.from({rotation: that.d2a(leanDegree)}).to({rotation: that.d2a(leanDegree + 30)})
+        hammer_tw1.time = 400
+        hammer_tw1.easing = PIXI.tween.Easing.outBack()
+        currentIndex = nailList.findIndex(item => { // 是否有锤子钉子的
+          return Math.abs(item.x - (hammer.x - hammer.height)) <= 28
+        })
+        that.rank = currentIndex
+        const hammer_tw2 = PIXI.tweenManager.createTween(hammer)
+        hammer_tw2.from({
+          y: beginY,
+          rotation: that.d2a(leanDegree + 30)
+        }).to({
+          y: beginY + nailH,
+          rotation: that.d2a(-90)
+        })
+        hammer_tw2.time = 1000
+        hammer_tw2.easing = PIXI.tween.Easing.outBack()
+        hammer_tw2.pingPong = true
+        hammer_tw1.start()
+        hammer_tw1.chain(hammer_tw2)
+        console.log('开始锤啦', currentIndex)
+        if (currentIndex > -1) {
+          var pathRect = new PIXI.tween.TweenPath(), r = 0
+          let minW = that.isLandscape ? 6 : 7, minH = that.isLandscape ? 26 : 28
+          let coord = {
+            x: blFrameList[currentIndex].x, 
+            y: blFrameList[currentIndex].y + minH,
+            width: that.isLandscape ? 84 : 94,
+            height: that.isLandscape ? 80 : 92
+          }
+          pathRect.moveTo(coord.x, coord.y - minH)
+          pathRect.lineTo(coord.x - minW, coord.y)
+          pathRect.lineTo(coord.x - (coord.width / 2 - r), coord.y)
+
+          pathRect.lineTo(coord.x - (coord.width / 2 - r), coord.y + (coord.height - r))
+          pathRect.lineTo(coord.x + (coord.width / 2 - r), coord.y + coord.height)
+          pathRect.lineTo(coord.x + coord.width / 2, coord.y)
+          pathRect.lineTo(coord.x + minW, coord.y)
+          pathRect.lineTo(coord.x, coord.y - minH)
+          var gPath1 = new PIXI.Graphics();
+          gPath1.lineStyle(1, 0xffffff, 1);
+          gPath1.drawPath(pathRect);
+          // marqeeContainer.addChild(gPath1)
+          var lightFrame = new PIXI.Sprite.fromImage(configMarqee.lightUrl)
+          marqeeContainer.addChild(lightFrame)
+          lightFrame.width = blFrameList[currentIndex].width
+          lightFrame.height = blFrameList[currentIndex].height
+          lightFrame.anchor.set(0.5, 0)
+          lightFrame.x = blFrameList[currentIndex].x
+          lightFrame.y = blFrameList[currentIndex].y
+          renderTexture = PIXI.RenderTexture.create(canvasW, canvasH)
+          var rendererTextureSprite = new PIXI.Sprite(renderTexture)
+          lightFrame.mask = rendererTextureSprite
+
+          hidden = new PIXI.Sprite(emptyIcon)
+          hidden.anchor.set(0.5)
+          hidden.scale.set(0)
+          hidden.x = lightFrame.x
+          hidden.y = lightFrame.y
+          marqeeContainer.addChild(hidden)
+        }
+        hammer_tw2.on('end', () => {
+          if (currentIndex == -1) {
+            const hammer_tw3 = PIXI.tweenManager.createTween(hammer)
+            hammer_tw3.from({rotation: that.d2a(leanDegree + 30)}).to({rotation: that.d2a(leanDegree)})
+            hammer_tw3.time = 200
+            hammer_tw3.easing = PIXI.tween.Easing.linear()
+            hammer_tw3.on('end', () => {
+              that.hammmerRun = true
+            })
+            hammer_tw3.start()
+          } else {
+            frameFlag = true
+            const light_tw = PIXI.tweenManager.createTween(hidden)
+            light_tw.path = pathRect
+            light_tw.time = 800
+            light_tw.easing = PIXI.tween.Easing.linear()
+            const light_tw2 = PIXI.tweenManager.createTween(lightFrame)
+            light_tw2.from({alpha: 1}).to({alpha: 0.3})
+            light_tw2.time = 200
+            light_tw2.repeat = 3
+            light_tw2.pingPong = true
+            light_tw.start()
+            light_tw.chain(light_tw2)
+            light_tw2.on('end', () => {
+              getNewPlane()
+            })
+          }
+        })
+
+      }
+      function nailAnimate (i, h){  // 钉子动画
+        noNail = new PIXI.Texture.from(configMarqee.nailUrl)  // 礼物盒遮罩
+        let rect1 = new PIXI.Rectangle(0, 0, nailW, h)
+        noNail.frame = rect1
+        newTexture = new PIXI.Texture(noNail.baseTexture, noNail.frame);
+        nailList[i].texture = newTexture
+      }
+      function knockAnimate () {
+        let textureArray = []
+        for (let i = 0; i < 8; i++) {
+          let texture = PIXI.Texture.fromImage(configMarqee.knockLight[i])
+          textureArray.push(texture)
+        }
+        anim = new PIXI.extras.AnimatedSprite(textureArray)
+        anim.x = that.isLandscape ? nailList[currentIndex].x + 16 : nailList[currentIndex].x + 16
+        anim.y = that.isLandscape ? beginY + 140 : beginY + 180
+        anim.anchor.set(0.5)
+        anim.scale.set(0.5)
+        anim.animationSpeed = 0.2;
+        anim.play();
+        anim.loop = false
+        marqeeContainer.addChild(anim);
+        console.log(anim)
+        anim.onComplete = function () {
+          anim.stop()
+          marqeeContainer.removeChild(anim)
+          console.log('eee')
+        }
+        lightBoomFlag = 2
+      }
       app.ticker.add(delta => {
         PIXI.tweenManager.update()
-        if (nailCount >= 131) {
+        if (nailCount >= nailH - 9) {
           nailRun = false
         }
         if (that.hammmerRun) { // 锤子挪动
@@ -241,106 +426,39 @@ export default{
             }
           }
         }
-        if (nailRun) { // 钉子运动
-          nailCount += 3
-          nailAnimate(selfNailIndex, 140 - nailCount)
+        if (nailFlag) { // 钉子动画
+          if (currentIndex > -1) {
+            if (hammer.y >= nailList[currentIndex].y) {
+              const nail_tw = PIXI.tweenManager.createTween(nailList[currentIndex])
+              let y1 = nailList[currentIndex].y
+              nail_tw.from({y: y1 }).to({y: y1 + nailH - 9})
+              nail_tw.time = 500
+              nail_tw.easing = PIXI.tween.Easing.outBack()
+              nail_tw.start()
+              nail_tw.on('start', () => {
+                nailFlag = false
+              })
+              nail_tw.on('end', () => {
+                lightBoomFlag = 1
+              })
+            }
+          }
+        } else { // 钉子变短
+          nailCount += 8 
+          if (nailCount >= nailH - 9) {
+            nailCount = nailH - 9
+          }
+          nailAnimate(currentIndex, nailH - nailCount)
+        }
+        if (lightBoomFlag == 1) { //爆炸
+          knockAnimate()
+        }
+        if (frameFlag) { //  飞机外层黑框
+          console.log(hidden.x, hidden.y)
+          brush.position.copy(hidden)
+          app.renderer.render(brush, renderTexture, false, null, false)
         }
       })
-
-      function layThings () { // 布置钉子奖品等
-        noNail = new PIXI.Texture.from(configMarqee.nailUrl)  // 礼物盒遮罩
-        noNail.baseTexture.width = 38 // 设置值了就不会报错 frame 
-        noNail.baseTexture.height = 140
-        console.log(noNail)
-        let rect = new PIXI.Rectangle(0, 0, 38, 140)
-        noNail.frame = rect
-        newTexture = new PIXI.Texture(noNail.baseTexture, noNail.frame);
-        let blFrameTexture = PIXI.Texture.fromImage(configMarqee.blackUrl) //飞机外层的黑框
-        for (let m = 0; m < 3; m++) { // 钉子
-          let nail = new PIXI.Sprite.from(newTexture)
-          nail.x = (canvasW / 6) * (2 * m + 1) - 19// 1 3 5
-          nail.y = desk.y - desk.height + 50 - 140
-          nailList.push(nail)
-          marqeeContainer.addChild(nail)
-          console.log(nail.x, nail.y, nail.anchor)
-          let blFrame = new PIXI.Sprite(blFrameTexture)
-          blFrame.width = 112
-          blFrame.height = 133
-          blFrame.anchor.set(0.5, 0)
-          blFrame.x = nail.x + 19
-          blFrame.y = canvasH - blFrame.height - 10
-          blFrameList.push(blFrame)
-          marqeeContainer.addChild(blFrame)
-          let plane = new PIXI.Sprite.fromImage(configMarqee.goodsList[m])
-          plane.scale.set(0.9)
-          plane.anchor.set(0.5)
-          plane.x = 0
-          plane.y = blFrame.height / 2 + 8
-          blFrame.addChild(plane)
-        }
-        // 锤子
-        hammer = new PIXI.Sprite.fromImage(configMarqee.hammerUrl) 
-        hammer.anchor.set(0.5, 1)
-        hammer.x = canvasW - 100
-        beginY = nailList[0].y - 50
-        hammer.y = beginY
-        hammer.width = 90
-        hammer.height = 156
-        hammer.rotation = that.d2a(leanDegree)
-        marqeeContainer.addChild(hammer)
-      }
-      function driveNail () {
-        const hammer_tw1 = PIXI.tweenManager.createTween(hammer)
-        hammer_tw1.from({rotation: that.d2a(leanDegree)}).to({rotation: that.d2a(leanDegree + 30)})
-        hammer_tw1.time = 400
-        hammer_tw1.easing = PIXI.tween.Easing.outBack()
-
-        const hammer_tw2 = PIXI.tweenManager.createTween(hammer)
-        hammer_tw2.from({
-          y: beginY,
-          rotation: that.d2a(leanDegree + 30)
-        }).to({
-          y: beginY + 10,
-          rotation: that.d2a(-90)
-        })
-        hammer_tw2.time = 800
-        hammer_tw2.easing = PIXI.tween.Easing.outBack()
-        
-        const hammer_tw3 = PIXI.tweenManager.createTween(hammer)
-        hammer_tw3.from({y: beginY }).to({y: beginY + 140})
-        hammer_tw3.time = 1200
-        hammer_tw3.easing = PIXI.tween.Easing.outBack()
-
-        hammer_tw1.start()
-        hammer_tw1.chain(hammer_tw2).chain(hammer_tw3)
-        hammer_tw2.on('end', () => {
-          console.log('开始锤啦')
-          selfNailIndex = nailList.findIndex(item => { // 是否有锤子钉子的
-            return Math.abs(item.x - (hammer.x - hammer.height)) <= 28
-          })
-          const nail_tw = PIXI.tweenManager.createTween(nailList[selfNailIndex])
-          nail_tw.from({y: beginY }).to({y: beginY + 140})
-          nail_tw.time = 400
-          nail_tw.easing = PIXI.tween.Easing.outBack()
-          if (selfNailIndex > -1) {
-            nailRun = true
-            nail_tw.start()
-          }
-        })
-        
-      }
-      function nailAnimate (i, h){  // 钉子动画
-        if(h >= 131){
-          h = 131
-        }
-        noNail = new PIXI.Texture.from(configMarqee.nailUrl)  // 礼物盒遮罩
-        let rect = new PIXI.Rectangle(0, 0, 38, h)
-        noNail.frame = rect
-        newTexture = new PIXI.Texture(noNail.baseTexture, noNail.frame);
-        nailList[i].texture = newTexture
-      }
-    
-
 
       if (that.status == 1) {
         currentIndex = that.rank
@@ -352,53 +470,34 @@ export default{
       }
 
     
-
-      
-      
-      
-      
-      
-     
-    
-
-      
-  
-      
-     
-   
-     
-       // marqeeContainer.visible = false
-      // currentIndex = 4
-      // that.rank = currentIndex
-      // that.status = 1
-      // // getSuccess()
-      // getNewPlane()
+       /* test
+      marqeeContainer.visible = false
+      currentIndex = 2
+      that.rank = currentIndex
+      that.status = 1
+      // getSuccess()
+      getNewPlane()
+      */
       function getNewPlane () {
         let goodSprite
         sceneContainer = new PIXI.Container()
         app.stage.addChild(sceneContainer)
         trackContainer = new PIXI.Container()
         sceneContainer.addChild(trackContainer)
-        goodSprite = new PIXI.Sprite(textureList1[0])
+        goodSprite = new PIXI.Sprite(textureList1[that.rank])
         goodSprite.anchor.set(0.5)
-        let pos = planePath.getGlobalPosition()
+        let pos = giftList[currentIndex].getGlobalPosition()
         app.stage.addChild(goodSprite)
-        goodSprite.scale.set(0.6)
+        goodSprite.scale.set(0.4)
         goodSprite.x = pos.x
         goodSprite.y = pos.y
 
         goodSprite.interactive = true
-        // goodSprite.parentGroup = group2
-        // if (that.step == 1) {
-          goodSprite.pName = Math.random().toString(36).substr(2)
-          goodSprite.pRank = that.rank
-          goodSprite.pIndex = 0
-          planeList[0] = goodSprite
-          that.$set(that.planeList, 0, goodSprite)
-        // } else {
-          
-          
-        // }
+        goodSprite.pName = Math.random().toString(36).substr(2)
+        goodSprite.pRank = that.rank
+        goodSprite.pIndex = 0
+        planeList[0] = goodSprite
+        that.$set(that.planeList, 0, goodSprite)
        
         if (that.status == 1 && !that.isMarquee) {
           showScene2(goodSprite)
@@ -406,7 +505,7 @@ export default{
         }
         setTimeout(() => {
           showScene2(goodSprite)
-        }, 800)
+        }, 100)
       }
       //场景二
       function showScene2 (goodSprite) {
@@ -724,9 +823,9 @@ export default{
           createPlane(rank, n)
         })
       }
-      function createPlane (r, i = 1) {
+      function createPlane (r, i = 1) { // 0 == 25, 1 == 26
         console.log(`%c 创建飞机${r}，在${i}位置, step为${that.step}`,'color:blue')
-        let plane = new PIXI.Sprite(textureList1[r - 1])
+        let plane = new PIXI.Sprite(textureList1[r])
         plane.anchor.set(0.5, 0.5)
         plane.scale.set(0)
         plane.pName = Math.random().toString(36).substr(2)
@@ -969,7 +1068,7 @@ export default{
         trackIconList[that.total].texture = fullIcon
         planeTemp = new PIXI.Container()
         sceneContainer.addChild(planeTemp)
-        let planeShadow = new PIXI.Sprite.fromImage(configMarqee.planeList[rank - 1])
+        let planeShadow = new PIXI.Sprite.fromImage(configMarqee.highPlaneList[rank])
         planeShadow.anchor.set(0.5)
         // planeShadow.parentGroup = group1
         planeShadow.alpha = 0.7
@@ -995,8 +1094,8 @@ export default{
         arrow.y = slotList[moveI].y + planeShadow.height / 2
         planeTemp.addChild(arrow)
         let noFlag = false, newIndex = 0
-        planeList[moveI].texture = textureList2[planeList[moveI].pRank - 1]
-        that.$set(that.planeList[moveI], 'texture', textureList2[planeList[moveI].pRank - 1])
+        planeList[moveI].texture = textureList2[planeList[moveI].pRank]
+        that.$set(that.planeList[moveI], 'texture', textureList2[planeList[moveI].pRank])
         planeList[moveI].width = 80
         planeList[moveI].height = 80
         let moving_tween = PIXI.tweenManager.createTween(planeList[moveI])
@@ -1044,8 +1143,8 @@ export default{
               tw.on('end', () => { //对应等级的running 回了
                 if (repeatFlag) {return}
                 console.log('%c 我回了', 'color: yellow')
-                planeList[ind].texture = textureList1[rank - 1]
-                that.$set(that.planeList[ind], 'texture', textureList1[rank - 1])
+                planeList[ind].texture = textureList1[rank]
+                that.$set(that.planeList[ind], 'texture', textureList1[rank])
                 planeList[ind].scale.set(0.26)
                 // that.$set(that.planeList[ind], 'scale', {x: 0.26, y: 0.26})
                 planeList[ind].rotation = 0
