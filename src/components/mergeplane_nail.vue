@@ -582,7 +582,7 @@ export default{
           fontWeight: 'bold',
           fontSize: that.isLandscape ? 36 : 40,
           fontFamily: 'Arial',
-          fill: '0xffffff'
+          fill: '0xE26C33'
         })
         coinSprite.x = that.isLandscape ? 60 : 70
         coinSprite.y = 10
@@ -704,6 +704,7 @@ export default{
             that.$set(that.slotList[0], 'occpuied', true)
             goodSprite.x = slotList[0].x
             goodSprite.y = slotList[0].y
+            that.toggleFlag = true
             if (slotList[0].occpuied) {
               dropGift(1, that.rank)
             } else {
@@ -711,6 +712,7 @@ export default{
             }
             play(goodSprite)
           } else if (that.step == 2) {
+            that.toggleFlag = true
             createPlane(that.slotList[that.plane_location ? 0 : 1].rank, that.plane_location ? 0 : 1)
           } else if (that.step == 3) {
             that.total = -1
