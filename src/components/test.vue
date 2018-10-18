@@ -5,7 +5,7 @@
 /* eslint-disable */
 import * as PIXI from 'pixi.js'
 import tweenManager from 'pixi-tween'
-import configMarqee from '../assets/js/marqee_config'
+import configMarqee from '../assets/js/nail_config'
 export default {
   name: 'test',
   data () {
@@ -32,60 +32,43 @@ export default {
       app.renderer.view.style.display = 'block'
       app.renderer.autoResize = true
 
-      let redCont = new PIXI.Container()
+      let marqeeContainer = new PIXI.Container()
       let yellowCont = new PIXI.Container()
-      app.stage.addChild(redCont)
+      app.stage.addChild(marqeeContainer)
       app.stage.addChild(yellowCont)
 
-      // let pivotSprite = new PIXI.Sprite.fromImage(configMarqee.marqeePviot)
-      // pivotSprite.anchor.set(0.5)
-      // pivotSprite.width = 88
-      // pivotSprite.height = 99
-      // pivotSprite.interactive = true
-      // pivotSprite.buttonMode = true
-      // redCont.addChild(pivotSprite)
-      let lightArr1 = [], lightArr2 = []
-      let rTexture = PIXI.Texture.fromImage(configMarqee.redLight)
-      let yTexture = PIXI.Texture.fromImage(configMarqee.yellowLight)
-      for (let m = 0; m < 24; m++) {
-        let rLight = new PIXI.Sprite(rTexture)
-        rLight.anchor.set(0.5, 0.5)
-        rLight.width = 12
-        rLight.height = 12
-        rLight.x = Math.sin(this.d2a(m * 360 / 24)) * (outRadius - 38)
-        rLight.y = Math.cos(this.d2a(m * 360 / 24)) * (outRadius - 38)
-        redCont.addChild(rLight)
-        lightArr1.push(rLight)
-      }
-      for (let n = 0, startIndex = 10;n < 3; n++) {
-        let yLight = new PIXI.Sprite(yTexture)
-        yLight.anchor.set(0.5, 0.5)
-        yLight.width = 28
-        yLight.height = 28
-        lightArr2.push(yLight)
-        yLight.x = lightArr1[startIndex].x
-        yLight.y = lightArr1[startIndex].y
-        yLight.otherIndex = startIndex
-        yellowCont.addChild(yLight)
-        startIndex++
-      }
-      let path = new PIXI.tween.TweenPath()
-      path.arc(200, 200, 168, 0, Math.PI * 2, false)
-      path.closed = true
-      let gPath = new PIXI.Graphics()
-      gPath.lineStyle(1, 0xfffff, 1)
-      gPath.drawPath(path)
-      app.stage.addChild(gPath)
-      let timer = 1000
-      const lightCont_tween = PIXI.tweenManager.createTween(yellowCont)
-      lightCont_tween.path = path
-      lightCont_tween.time = timer
-      lightCont_tween.easing = PIXI.tween.Easing.outBounce()
-      lightCont_tween.on('start', () => {
-        console.log('light is moveing')
-      })
-      lightCont_tween.start()
+      
+      var background = new PIXI.Sprite.fromImage(configMarqee.blackUrl);
+          marqeeContainer.addChild(background);
+          background.width = 112;
+          background.height = 133
+          background.anchor.set(0.5, 0)
+          background.x = 0 //blFrameList[selfNailIndex].x
+          background.y = 0 //blFrameList[selfNailIndex].y
+          var imageToReveal = new PIXI.Sprite.fromImage(configMarqee.lightUrl)
+          marqeeContainer.addChild(imageToReveal);
+          imageToReveal.width = 112;
+          imageToReveal.height = 133
+          imageToReveal.anchor.set(0.5, 0)
+          imageToReveal.x = 0 //blFrameList[selfNailIndex].x
+          imageToReveal.y = 0//blFrameList[selfNailIndex].y
+          var renderTexture = PIXI.RenderTexture.create(app.screen.width, app.screen.height);
+          var renderTextureSprite = new PIXI.Sprite(renderTexture);
+          // stage.addChild(renderTextureSprite);
+          imageToReveal.mask = renderTextureSprite;
 
+      // let lightFrame = new PIXI.Sprite.fromImage(configMarqee.lightUrl)
+      //     marqeeContainer.addChild(lightFrame)
+      //     lightFrame.width = 112
+      //     lightFrame.height = 133
+      //     lightFrame.anchor.set(0.5, 0)
+      //     lightFrame.x = blFrameList[selfNailIndex].x
+      //     lightFrame.y = blFrameList[selfNailIndex].y
+      //     var renderTexture = PIXI.RenderTexture.create(app.screen.width, app.screen.height);
+
+      //     var renderTextureSprite = new PIXI.Sprite(renderTexture);
+      //     marqeeContainer.addChild(renderTextureSprite);
+      //     lightFrame.mask = renderTextureSprite;
       app.ticker.add(delta => {
         PIXI.tweenManager.update()
       })

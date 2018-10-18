@@ -304,6 +304,7 @@ export default{
           let dragging = false
           function pointerMove (event) {
             if (dragging) {
+              console.log(event)
               brush.position.copy(event.data.global)
               app.renderer.render(brush, renderTexture, false, null, false)
               let brushPos = event.data.global

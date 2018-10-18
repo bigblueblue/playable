@@ -244,7 +244,7 @@ export default {
       btGift.height = 88
       btGift.x = this.app1.screen.width / 2
       btGift.y = this.isLandscape ? this.btnH - btGift.height + 16: this.btnH - btGift.height + 10
-      GiftScene.addChild(btGift)
+      // GiftScene.addChild(btGift)
       this.btGift = btGift
       // 黑色礼盒遮罩
       this.texture = new PIXI.Texture.from(CONFIG.blackMask)  // 礼物盒遮罩
@@ -397,7 +397,7 @@ export default {
         }else{
           maskCount = 0
         }
-        that.updateBlmask(88 - maskCount)
+        // that.updateBlmask(88 - maskCount)
       })
     },
     updateBlmask (h){

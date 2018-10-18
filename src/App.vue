@@ -8,15 +8,12 @@
 </template>
 
 <script>
-// import mergePlane from './components/mergePlane'
-import marqueePlane from './components/marqee_plane'
-// import phaserTest from './components/learning/phaser-plane'
-// import scratchPlay from './components/scratch_play'
+
 export default {
   name: 'App',
   components: {
-    // mergePlane,
-    marqueePlane
+    // mergePlane
+    // marqueePlane
     // phaserTest
     // scratchPlay
   }

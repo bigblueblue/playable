@@ -124,9 +124,10 @@ export default{
       canvas = document.querySelector('#mergePlane canvas')
       if (document.body.clientWidth >= canvasW * document.body.clientHeight / canvasH) {
         app.renderer.view.style.height = '100%'
-        app.renderer.view.style.width = canvasW * document.body.clientHeight / canvasH
+        app.renderer.view.style.width = canvasW * document.body.clientHeight
+        // console.log(canvasW * document.body.clientHeight / canvasH)
       } else {
-        app.renderer.view.style.height = canvasH * document.body.clientHeight / canvasW
+        app.renderer.view.style.height = canvasH * document.body.clientHeight
         app.renderer.view.style.width = '100%'
       }
       app.renderer.autoResize = true
