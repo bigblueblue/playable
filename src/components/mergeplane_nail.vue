@@ -134,7 +134,7 @@ export default{
       var fullIcon = PIXI.Texture.fromImage(configMarqee.rankFillUrl), runningPlanes = [] , planeTemp, trackIconList = [] //new Array(6).fill({})
       var tweenList = [], trackContainer
       var nailList = [], blFrameList = [], hammer, noNail, newTexture, hidden, giftList = [], renderTexture
-      var beginY // 锤子初始y
+      var beginY, txt, txt_tw// 锤子初始y 
       const leanDegree = -45
       let canvas
       // app = new PIXI.Application({
@@ -191,27 +191,32 @@ export default{
       brush.drawCircle(0, 0, 10);
       brush.endFill(); 
       
-      
+
 
       let logoObj = that.isEnglish ? configMarqee.logoUrl : configMarqee['logoUrl_cn']
       let logo = new PIXI.Sprite.fromImage(logoObj)
       logo.anchor.set(0.5)
       logo.width = that.isEnglish ? 103 : 123
       logo.height = 73
-      logo.x = that.isLandscape ? 60 : canvasW / 2
-      logo.y = that.isLandscape ? 50 : 60
+      logo.scale.set(1)
+      logo.x = 60 //that.isLandscape ? 60 : canvasW / 2
+      logo.y = 50 // that.isLandscape ? 50 : 60
+      logo.interactive = true
       marqeeContainer.addChild(logo)
+      logo.on('pointerdown', () => {
+        that.linkAppStore(logo, 1)
+      })
       let downObj = that.isEnglish ? configMarqee.downBtnUrl : configMarqee['downBtnUrl_cn']
       let downBtn = new PIXI.Sprite.fromImage(downObj)
       downBtn.anchor.set(0.5)
       downBtn.width = 150 
       downBtn.height = that.isEnglish ? 65 : 45
-      downBtn.x = that.isLandscape ? canvasW - 80 : canvasW / 2
-      downBtn.y = that.isLandscape ? 55 : 136
+      downBtn.x =  canvasW - 80 // that.isLandscape ? canvasW - 80 : canvasW / 2
+      downBtn.y = 50 // that.isLandscape ? 55 : 136
       downBtn.interactive = true
       marqeeContainer.addChild(downBtn)
       downBtn.on('pointerdown', () => {
-        that.linkAppStore()
+        that.linkAppStore(downBtn, 1)
       })
       var textureList1 = [], textureList2 = [],  currentIndex =  -1, anim //
       for (let i = 0; i < 5; i++) { // 轨道上的飞机
@@ -223,7 +228,7 @@ export default{
       layThings()
 
       if (that.status == 1) {
-        currentIndex = that.rank
+        currentIndex = that.rank - 25
         getNewPlane()
         return
       } else if (that.status == 2) {
@@ -232,24 +237,35 @@ export default{
       }
 
      
-      app.stage.interactive = true
-      app.buttonMode = true
-      app.stage.on('pointerdown', () => { // 锤下去
+      bgSprite.interactive = true
+      bgSprite.buttonMode = true
+      bgSprite.on('pointerdown', () => { // 锤下去
         if (!that.hammmerRun) {return}
         that.hammmerRun = false
         driveNail()
       })
-      let eqFlag = false, maxX = that.isLandscape ? canvasW : canvasW + 100, minX = that.isLandscape ? 0 : 120
+      let eqFlag = false, maxX = that.isLandscape ? canvasW + 60 : canvasW + 100, minX = that.isLandscape ? 90 : 120
       let nailRun = false, nailCount = 0, nailFlag = true // 钉子是否可以动画
       let frameFlag = false, lightBoomFlag = 0
       
       
 
       function layThings () { // 布置钉子奖品等
+        txt = new PIXI.Text('tap to \nselect your plane', {
+          fontSize: 30,
+          lineHeight: 38,
+          fill:  '0x000000',//'0xE26C33',
+          fontFamily: 'NumFont',
+          align: 'center'
+        })
+        txt.anchor.set(0.5)
+        txt.x = canvasW / 2
+        txt.y = that.isLandscape ? logo.x + 30 : logo.x + 120
+        marqeeContainer.addChild(txt)
+
         noNail = new PIXI.Texture.from(configMarqee.nailUrl)  // 礼物盒遮罩
         noNail.baseTexture.width = nailW // 设置值了就不会报错 frame 
         noNail.baseTexture.height = nailH
-        console.log(noNail)
         let rect = new PIXI.Rectangle(0, 0, nailW, nailH)
         noNail.frame = rect
         newTexture = new PIXI.Texture(noNail.baseTexture, noNail.frame);
@@ -260,7 +276,6 @@ export default{
           nail.y = desk.y - desk.height + closeH - nailH
           nailList.push(nail)
           marqeeContainer.addChild(nail)
-          console.log(nail.x, nail.y, nail.anchor)
           let blFrame = new PIXI.Sprite(blFrameTexture)
           blFrame.width = that.isLandscape ? 100 : 112
           blFrame.height = that.isLandscape ? 110 : 133
@@ -287,6 +302,14 @@ export default{
         hammer.height = that.isLandscape ? 130 : 156
         hammer.rotation = that.d2a(leanDegree)
         marqeeContainer.addChild(hammer)
+
+        txt_tw = PIXI.tweenManager.createTween(txt)
+        txt_tw.from({alpha: 1}).to({alpha: 0})
+        txt_tw.time = 1600
+        txt_tw.easing = PIXI.tween.Easing.linear()
+        txt_tw.start()
+        txt_tw.loop = true
+        txt_tw.pingPong = true
       }
       function driveNail () {
         // let baseX = 0, baseY = 0
@@ -305,7 +328,6 @@ export default{
         currentIndex = nailList.findIndex(item => { // 是否有锤子钉子的
           return Math.abs(item.x - (hammer.x - hammer.height)) <= 28
         })
-        that.rank = currentIndex
         const hammer_tw2 = PIXI.tweenManager.createTween(hammer)
         hammer_tw2.from({
           y: beginY,
@@ -321,6 +343,7 @@ export default{
         hammer_tw1.chain(hammer_tw2)
         console.log('开始锤啦', currentIndex)
         if (currentIndex > -1) {
+          that.rank = currentIndex + 25
           var pathRect = new PIXI.tween.TweenPath(), r = 0
           let minW = that.isLandscape ? 6 : 7, minH = that.isLandscape ? 26 : 28
           let coord = {
@@ -455,6 +478,8 @@ export default{
               })
               nail_tw.on('end', () => {
                 lightBoomFlag = 1
+                marqeeContainer.removeChild(txt)
+                txt_tw.remove()
               })
             }
           }
@@ -491,7 +516,7 @@ export default{
         app.stage.addChild(sceneContainer)
         trackContainer = new PIXI.Container()
         sceneContainer.addChild(trackContainer)
-        goodSprite = new PIXI.Sprite(textureList1[that.rank])
+        goodSprite = new PIXI.Sprite(textureList1[that.rank - 25])
         goodSprite.anchor.set(0.5)
         let pos = giftList[currentIndex].getGlobalPosition()
         app.stage.addChild(goodSprite)
@@ -569,7 +594,7 @@ export default{
           drawImage(goodSprite)
         })
       }
-      function drawImage (goodSprite) {
+      function drawImage (goodSprite) { // 25 26 27 
         let coin = new PIXI.Sprite.fromImage(configMarqee.coinUrl)
         coin.anchor.set(0)
         coin.width = that.isLandscape ? 40 :49
@@ -577,7 +602,7 @@ export default{
         coin.x = 10
         coin.y = 10
         sceneContainer.addChild(coin)
-        coinNum = currentIndex * 100
+        coinNum = (currentIndex + 1) * 100
         coinSprite = new PIXI.Text(coinNum, {
           fontWeight: 'bold',
           fontSize: that.isLandscape ? 36 : 40,
@@ -596,6 +621,11 @@ export default{
         logo.y = canvasH - 15
         logo.x = 10
         sceneContainer.addChild(logo)
+        logo.buttonMode = true
+        logo.interactive = true
+        logo.on('pointerdown', () => {
+          that.linkAppStore(logo, 1)
+        })
         let downObj = that.isEnglish ? configMarqee.downBtnUrl : configMarqee['downBtnUrl_cn']
         let downBtn = new PIXI.Sprite.fromImage(downObj)
         downBtn.width = 150 
@@ -604,9 +634,10 @@ export default{
         downBtn.y = canvasH - 10
         downBtn.x = canvasW - 10
         downBtn.interactive = true
+        downBtn.buttonMode = true
         sceneContainer.addChild(downBtn)
         downBtn.on('pointerdown', () => {
-          that.linkAppStore()
+          that.linkAppStore(downBtn, 1)
         })
         let track = new PIXI.Sprite.fromImage(that.isLandscape ? configMarqee.trackUrl2 :  configMarqee.trackUrl)
         track.anchor.set(0.5)
@@ -704,7 +735,7 @@ export default{
             that.$set(that.slotList[0], 'occpuied', true)
             goodSprite.x = slotList[0].x
             goodSprite.y = slotList[0].y
-            that.toggleFlag = true
+            // that.toggleFlag = true
             if (slotList[0].occpuied) {
               dropGift(1, that.rank)
             } else {
@@ -712,7 +743,7 @@ export default{
             }
             play(goodSprite)
           } else if (that.step == 2) {
-            that.toggleFlag = true
+            // that.toggleFlag = true
             createPlane(that.slotList[that.plane_location ? 0 : 1].rank, that.plane_location ? 0 : 1)
           } else if (that.step == 3) {
             that.total = -1
@@ -834,7 +865,7 @@ export default{
       }
       function createPlane (r, i = 1) {
         console.log(`%c 创建飞机${r}，在${i}位置, step为${that.step}`,'color:blue')
-        let plane = new PIXI.Sprite(textureList1[r])
+        let plane = new PIXI.Sprite(textureList1[r - 25])
         plane.anchor.set(0.5, 0.5)
         plane.scale.set(0)
         plane.pName = Math.random().toString(36).substr(2)
@@ -847,10 +878,10 @@ export default{
         slotList[i].occpuied = true
         that.$set(that.slotList[i], 'rank', r)
         that.$set(that.slotList[i], 'occpuied', true)
-        planeList[i] = plane
-        that.$set(that.planeList, i, plane)
         plane.interactive = true
         plane.buttonMode = true
+        planeList[i] = plane
+        that.$set(that.planeList, i, plane)
         if (that.step >= 5 && that.status == 1 && that.isRun) {
         } else if (!that.isRun){
           // console.log('零零落落')
@@ -863,7 +894,7 @@ export default{
         }
         play(plane)
         if (that.step == 1) { // 指引合并 --- 指引到跑道 --- 指引返回
-          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 30, sceneContainer)
+          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 40, sceneContainer)
           handObj2.sprite.parentGroup = group3
           handObj2.tween.from({x: slotList[1].x}).to({x: slotList[0].x})
           handObj2.tween.time = 1600
@@ -887,20 +918,21 @@ export default{
             PIXI.tweenManager.removeTween(handObj2.tween)
             handObj2 = {}
           }
-          handObj2 = that.createHandTween(slotList[i].x + 10, slotList[i].y + 30, sceneContainer)
+          handObj2 = that.createHandTween(slotList[i].x + 10, slotList[i].y + 40, sceneContainer)
           handObj2.sprite.parentGroup = group3
           handObj2.tween.start()
         } else if (that.step == 4) {
           if (handObj2 && handObj2.sprite) {
             return
           }
-          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 20, sceneContainer)
+          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 40, sceneContainer)
           handObj2.sprite.parentGroup = group3
           handObj2.tween.from({x: slotList[1].x}).to({x: slotList[0].x})
           handObj2.tween.time = 1600
           handObj2.tween.start()
         } else if (that.step == 5) {
           console.log('开始定时器啦',that.step)
+          that.step++
           that.cleartimer = setInterval(() => {
             dropGift('', that.rank)
           }, 2800)
@@ -923,7 +955,6 @@ export default{
         }
         function onDragEnd (event) {
           if (!this.dragging) {return}
-          // debugger
           this.alpha = 1
           let moveI = this.pIndex
           let endI = findCloser(this.x, this.y, 40, moveI)
@@ -934,7 +965,7 @@ export default{
             let planeObj2 = planeList[moveI]
             let planeObj1 = planeList[endI]
             if (endRank == moveRank && !slotList[endI].running) { // 合成
-              if (that.step == 1 || that.step == 5 || that.step == 4) {
+              if (that.step == 1 || that.step == 4) {
                 if (handObj2 && handObj2.sprite) {
                   sceneContainer.removeChild(handObj2.sprite)
                   PIXI.tweenManager.removeTween(handObj2.tween)
@@ -964,6 +995,7 @@ export default{
                 })
                 getSuccess()
               } else {
+                console.log(`%c 终点位置${endI}飞机${endRank}，原点位置${moveI}飞机${moveRank}`,'color:blue')
                 spillAction(100, 100, slotList[endI].x, slotList[endI].y, [configMarqee.lightCircle, configMarqee.starUrl], configMarqee.lightEmitterConfig)
                 createPlane(moveRank + 1, endI)
               }
@@ -1078,7 +1110,7 @@ export default{
         trackIconList[that.total].texture = fullIcon
         planeTemp = new PIXI.Container()
         sceneContainer.addChild(planeTemp)
-        let planeShadow = new PIXI.Sprite.fromImage(configMarqee.highPlaneList[rank])
+        let planeShadow = new PIXI.Sprite.fromImage(configMarqee.highPlaneList[rank - 25])
         planeShadow.anchor.set(0.5)
         planeShadow.alpha = 0.5
         planeShadow.pRank = rank
@@ -1102,8 +1134,8 @@ export default{
         arrow.y = slotList[moveI].y + planeShadow.height / 2
         planeTemp.addChild(arrow)
         let noFlag = false, newIndex = 0
-        planeList[moveI].texture = textureList2[planeList[moveI].pRank]
-        that.$set(that.planeList[moveI], 'texture', textureList2[planeList[moveI].pRank])
+        planeList[moveI].texture = textureList2[planeList[moveI].pRank - 25]
+        that.$set(that.planeList[moveI], 'texture', textureList2[planeList[moveI].pRank - 25])
         planeList[moveI].width = 80
         planeList[moveI].height = 80
         let moving_tween = PIXI.tweenManager.createTween(planeList[moveI])
@@ -1129,7 +1161,7 @@ export default{
               let rIndex = runningPlanes.findIndex(v => {
                 return v.pIndex == ind
               })
-              console.log('回来的时候：', ind)
+              console.log('回来的时候：', ind, 'step为：' + that.step)
               const tw = PIXI.tweenManager.createTween(planeList[ind])
               tw.from({
                 x: planeList[ind].x,
@@ -1150,8 +1182,8 @@ export default{
               tw.on('end', () => { //对应等级的running 回了
                 if (repeatFlag) {return}
                 console.log('%c 我回了', 'color: yellow')
-                planeList[ind].texture = textureList1[rank]
-                that.$set(that.planeList[ind], 'texture', textureList1[rank])
+                planeList[ind].texture = textureList1[rank - 25]
+                that.$set(that.planeList[ind], 'texture', textureList1[rank - 25])
                 planeList[ind].scale.set(0.26)
                 // that.$set(that.planeList[ind], 'scale', {x: 0.26, y: 0.26})
                 planeList[ind].rotation = 0
@@ -1170,12 +1202,13 @@ export default{
                   if (handObj2 && handObj2.sprite) {
                     return
                   }
-                  handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 20, sceneContainer)
+                  handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 40, sceneContainer)
                   handObj2.sprite.parentGroup = group3
                   handObj2.tween.from({x: slotList[1].x}).to({x: slotList[0].x})
                   handObj2.tween.time = 1600
                   handObj2.tween.start()
                   that.step++
+                  console.log('回来后step为：' + that.step)
                 }
               })
             }
@@ -1195,7 +1228,7 @@ export default{
               if (Math.abs(item.x - leftX) <= 40 && Math.abs(item.y - leftY) <= 30 &&!item.moneyFlag) {
                 spillAction(40, 40, xCoord[3], winY, [configMarqee.coinUrl], configMarqee.coinEmitterConfig)
                 item.moneyFlag = true;
-                coinNum += that.addArr[item.pRank - 1]
+                coinNum += that.addArr[item.pRank - 25]
                 coinSprite.text = coinNum
                 const tween = PIXI.tweenManager.createTween(keySprite)
                 tween.from({
@@ -1242,8 +1275,6 @@ export default{
         rectangle.beginFill(0x132127, 0.56)
         rectangle.drawRect(0, 0, canvasW, canvasH)
         bgSprite1.addChild(rectangle)
-        console.log(app, app.stage.width)
-        console.log(document.getElementsByTagName('canvas')[0].width)
         let lightBg = new PIXI.Sprite.fromImage(configMarqee.successLightUrl)
         lightBg.anchor.set(0.5)
         let x2 = canvasW / 2
@@ -1376,20 +1407,41 @@ export default{
     getRandomNum (min, max) {
       return Math.floor(Math.random() * (max - min + 1) + min)
     },
-    linkAppStore() {
+    linkAppStore(sprite, n) {
       let url = this.iosLink;
       let userAgent = navigator.userAgent || navigator.vendor;
       if (/android/i.test(userAgent)) {
         url = this.androidLink;
       }
-      try {
-        // dapi.openStoreUrl();
-        // console.log('dapi open store')
-        mraid.open(url);          // ad平台【AdColony Applovin Vungle】
-        console.log('mraid open store')
-      } catch (err) {
-        console.error(err);
-        window.location = url;
+      if (sprite && n && sprite.x) {
+        const tw = PIXI.tweenManager.createTween(sprite)
+        tw.from({scale: {x: n, y: n}}).to({scale: {x: n + 0.2, y: n + 0.2}})
+        tw.easing = PIXI.tween.Easing.linear()
+        tw.time = 180
+        tw.pingPong = true
+        tw.repeat = 1
+        tw.start()
+        tw.on('end', () => {
+          try {
+            // dapi.openStoreUrl();
+            // console.log('dapi open store')
+            mraid.open(url);          // ad平台【AdColony Applovin Vungle】
+            console.log('mraid open store')
+          } catch (err) {
+            console.error(err);
+            window.location = url;
+          }
+        })
+      } else {
+        try {
+          // dapi.openStoreUrl();
+          // console.log('dapi open store')
+          mraid.open(url);          // ad平台【AdColony Applovin Vungle】
+          console.log('mraid open store')
+        } catch (err) {
+          console.error(err);
+          window.location = url;
+        }
       }
     }
   }
