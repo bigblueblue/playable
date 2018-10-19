@@ -32,9 +32,11 @@ export default{
       slotList: [{}, {}, {}, {}],
       planeList: [],
       isRun: false,
+      coinNum: 0, // 保存切换时候金币数量
       durationTime: 3000,
       hammmerRun: true,
       isEnglish: true,
+      draggingFlag: false, //是否正在抓飞机
       toggleFlag: true, // 切屏的时候step为3时
       status: 0 // 0 表示转盘 1 表示跑道 2表示到成功页面了
     }
@@ -82,7 +84,7 @@ export default{
           that.isLandscape = false
         }
         clearInterval(that.cleartimer)
-        // console.log(that.status)
+        console.log('之前的金币数', that.coinNum)
         if (!that.status) {
           that.isMarquee = true
           console.log('切换了')
@@ -130,7 +132,7 @@ export default{
       const spinCopies = 6
       const lightDegrees = -180, startDegrees = 0
       var app, planeList = new Array(4).fill({}), handObj2, slotList = [], sceneContainer,  path, keySprite
-      var emptyIcon = PIXI.Texture.fromImage(configMarqee.rankEmptyUrl), coinNum = 0, coinSprite
+      var emptyIcon = PIXI.Texture.fromImage(configMarqee.rankEmptyUrl), coinSprite
       var fullIcon = PIXI.Texture.fromImage(configMarqee.rankFillUrl), runningPlanes = [] , planeTemp, trackIconList = [] //new Array(6).fill({})
       var tweenList = [], trackContainer
       var nailList = [], blFrameList = [], hammer, noNail, newTexture, hidden, giftList = [], renderTexture
@@ -602,8 +604,10 @@ export default{
         coin.x = 10
         coin.y = 10
         sceneContainer.addChild(coin)
-        coinNum = (currentIndex + 1) * 100
-        coinSprite = new PIXI.Text(coinNum, {
+        if (!that.status) {
+          that.coinNum = (currentIndex + 1) * 100
+        }
+        coinSprite = new PIXI.Text(that.coinNum, {
           fontWeight: 'bold',
           fontSize: that.isLandscape ? 36 : 40,
           fontFamily: 'Arial',
@@ -766,7 +770,7 @@ export default{
                 }
                 createPlane(item.rank, index)
                 if (item.running) {
-                  coinSprite.text = coinNum
+                  coinSprite.text = that.coinNum
                   addMoney(index, item.rank)
                   console.log(index, item.rank)
                 }
@@ -894,7 +898,7 @@ export default{
         }
         play(plane)
         if (that.step == 1) { // 指引合并 --- 指引到跑道 --- 指引返回
-          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 40, sceneContainer)
+          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 50, sceneContainer)
           handObj2.sprite.parentGroup = group3
           handObj2.tween.from({x: slotList[1].x}).to({x: slotList[0].x})
           handObj2.tween.time = 1600
@@ -918,14 +922,14 @@ export default{
             PIXI.tweenManager.removeTween(handObj2.tween)
             handObj2 = {}
           }
-          handObj2 = that.createHandTween(slotList[i].x + 10, slotList[i].y + 40, sceneContainer)
+          handObj2 = that.createHandTween(slotList[i].x + 10, slotList[i].y + 50, sceneContainer)
           handObj2.sprite.parentGroup = group3
           handObj2.tween.start()
         } else if (that.step == 4) {
           if (handObj2 && handObj2.sprite) {
             return
           }
-          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 40, sceneContainer)
+          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 50, sceneContainer)
           handObj2.sprite.parentGroup = group3
           handObj2.tween.from({x: slotList[1].x}).to({x: slotList[0].x})
           handObj2.tween.time = 1600
@@ -947,6 +951,8 @@ export default{
         item.on('pointermove', onDragMove)
 
         function onDragStart (event) {
+          if (that.draggingFlag) {return}
+          that.draggingFlag = true
           this.data = event.data
           this.alpha = 0.5
           this.dragging = true
@@ -955,6 +961,7 @@ export default{
         }
         function onDragEnd (event) {
           if (!this.dragging) {return}
+          that.draggingFlag = false
           this.alpha = 1
           let moveI = this.pIndex
           let endI = findCloser(this.x, this.y, 40, moveI)
@@ -1176,6 +1183,11 @@ export default{
               tw.start()
               tw.loop = false
               tw.on('start', () => {
+                slotList[ind].running = false
+                that.$set(that.slotList[ind], 'running', false)
+                PIXI.tweenManager.removeTween(tweenList[rIndex])
+                tweenList.splice(rIndex, 1)
+                runningPlanes.splice(rIndex, 1)
                 console.log('i am back')
               })
               let repeatFlag = false
@@ -1185,16 +1197,11 @@ export default{
                 planeList[ind].texture = textureList1[rank - 25]
                 that.$set(that.planeList[ind], 'texture', textureList1[rank - 25])
                 planeList[ind].scale.set(0.26)
-                // that.$set(that.planeList[ind], 'scale', {x: 0.26, y: 0.26})
                 planeList[ind].rotation = 0
-                slotList[ind].running = false
-                that.$set(that.slotList[ind], 'running', false)
-                // sceneContainer.removeChild(planeTemp)
+                that.$set(that.planeList[ind], 'rotation', 0)
+        
                 PIXI.tweenManager.removeTween(tw)
-                PIXI.tweenManager.removeTween(tweenList[rIndex])
                 sceneContainer.removeChild(amid)
-                runningPlanes.splice(rIndex, 1)
-                tweenList.splice(rIndex, 1)
                 trackIconList[that.total].texture = emptyIcon
                 that.total--
                 repeatFlag = true
@@ -1202,7 +1209,7 @@ export default{
                   if (handObj2 && handObj2.sprite) {
                     return
                   }
-                  handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 40, sceneContainer)
+                  handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 50, sceneContainer)
                   handObj2.sprite.parentGroup = group3
                   handObj2.tween.from({x: slotList[1].x}).to({x: slotList[0].x})
                   handObj2.tween.time = 1600
@@ -1228,8 +1235,8 @@ export default{
               if (Math.abs(item.x - leftX) <= 40 && Math.abs(item.y - leftY) <= 30 &&!item.moneyFlag) {
                 spillAction(40, 40, xCoord[3], winY, [configMarqee.coinUrl], configMarqee.coinEmitterConfig)
                 item.moneyFlag = true;
-                coinNum += that.addArr[item.pRank - 25]
-                coinSprite.text = coinNum
+                that.coinNum += that.addArr[item.pRank - 25]
+                coinSprite.text = that.coinNum
                 const tween = PIXI.tweenManager.createTween(keySprite)
                 tween.from({
                   scale: {x: 0.8, y: 0.8}
