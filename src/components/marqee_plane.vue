@@ -544,7 +544,7 @@ export default{
         downBtn.width = 150 
         downBtn.height = that.isEnglish ? 65 : 45
         downBtn.anchor.set(1, 1)
-        downBtn.y = canvasH - 10
+        downBtn.y = that.isEnglish ? canvasH - 10 : canvasH - 20
         downBtn.x = canvasW - 10
         downBtn.interactive = true
         sceneContainer.addChild(downBtn)
@@ -1052,6 +1052,8 @@ export default{
         that.$set(that.planeList[moveI], 'texture', textureList2[planeList[moveI].pRank - 1])
         planeList[moveI].width = 80
         planeList[moveI].height = 80
+        planeList[moveI].interactive = false // 不让轨道上的飞机可点击
+        that.$set(that.planeList[moveI], 'interactive', false)
         let moving_tween = PIXI.tweenManager.createTween(planeList[moveI])
         runningPlanes.push(planeList[moveI])
         tweenList.push(moving_tween)
@@ -1101,6 +1103,8 @@ export default{
               tw.on('end', () => { //对应等级的running 回了
                 if (repeatFlag) {return}
                 console.log('%c 我回了', 'color: yellow')
+                planeList[ind].interactive = true // 回来后让其可点击
+                that.$set(that.planeList[ind], 'interactive', true)
                 planeList[ind].texture = textureList1[rank - 1]
                 planeList[ind].rotation = 0
                 planeList[ind].scale.set(0.26)
@@ -1332,6 +1336,7 @@ export default{
 
         // dapi.openStoreUrl();         
         // console.log('dapi open store')
+
         mraid.open(url);          // ad平台【AdColony Applovin Vungle】文件名unity/ merge
         console.log('mraid open store')
       } catch (err) {
