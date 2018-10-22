@@ -1145,6 +1145,8 @@ export default{
         that.$set(that.planeList[moveI], 'texture', textureList2[planeList[moveI].pRank - 25])
         planeList[moveI].width = 80
         planeList[moveI].height = 80
+        planeList[moveI].interactive = false // 不让轨道上的飞机可点击
+        that.$set(that.planeList[moveI], 'interactive', false)
         let moving_tween = PIXI.tweenManager.createTween(planeList[moveI])
         runningPlanes.push(planeList[moveI])
         tweenList.push(moving_tween)
@@ -1194,6 +1196,8 @@ export default{
               tw.on('end', () => { //对应等级的running 回了
                 if (repeatFlag) {return}
                 console.log('%c 我回了', 'color: yellow')
+                planeList[ind].interactive = true // 回来后让其可点击
+                that.$set(that.planeList[ind], 'interactive', true)
                 planeList[ind].texture = textureList1[rank - 25]
                 that.$set(that.planeList[ind], 'texture', textureList1[rank - 25])
                 planeList[ind].scale.set(0.26)
