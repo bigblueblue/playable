@@ -29,6 +29,7 @@ export default{
       planeList: [],
       isRun: false,
       durationTime: 3000,
+      draggingFlag: false, //是否正在抓飞机
       isEnglish: true, //false,
       toggleFlag: true, // 切屏的时候step为3时
       status: 0 // 0 表示转盘 1 表示跑道 2表示到成功页面了
@@ -37,6 +38,29 @@ export default{
   mounted () {
     this.getSize()
     this.initPIXI()
+    if (!Array.prototype.findIndex) {
+      Array.prototype.findIndex = function (predicate) {
+        console.log(`%c findIndex`, "color:red;");
+        if (this == null) {
+          throw new TypeError('"this" is null or not defined');
+        }
+        var o = Object(this);
+        var len = o.length >>> 0;
+        if (typeof predicate !== 'function') {
+          throw new TypeError('predicate must be a function');
+        }
+        var thisArg = arguments[1];
+        var k = 0;
+        while (k < len) {
+          var kValue = o[k];
+          if (predicate.call(thisArg, kValue, k, o)) {
+            return k;
+          }
+          k++;
+        }
+        return -1;
+      }
+    }
   },
   computed: {
     plane_location: function () {
@@ -118,7 +142,9 @@ export default{
       var fullIcon = PIXI.Texture.fromImage(configMarqee.rankFillUrl), runningPlanes = [] , planeTemp, trackIconList = [] //new Array(6).fill({})
       var tweenList = [], trackContainer
       let canvas
-      app = new PIXI.Application(canvasW, canvasH)
+      app = new PIXI.Application(canvasW, canvasH, {
+        forceCanvas: 'canvas'
+      })
       //app = PIXI.autoDetectRenderer(canvasW, canvasH)
       document.getElementById('mergePlane').appendChild(app.view)
       canvas = document.querySelector('#mergePlane canvas')
@@ -621,6 +647,7 @@ export default{
             that.$set(that.slotList[0], 'occpuied', true)
             goodSprite.x = slotList[0].x
             goodSprite.y = slotList[0].y
+            // that.toggleFlag = true
             if (slotList[0].occpuied) {
               dropGift(1, that.rank)
             } else {
@@ -628,6 +655,7 @@ export default{
             }
             play(goodSprite)
           } else if (that.step == 2) {
+            // that.toggleFlag = true
             createPlane(that.slotList[that.plane_location ? 0 : 1].rank, that.plane_location ? 0 : 1)
           } else if (that.step == 3) {
             that.total = -1
@@ -778,7 +806,7 @@ export default{
         }
         play(plane)
         if (that.step == 1) { // 指引合并 --- 指引到跑道 --- 指引返回
-          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 30, sceneContainer)
+          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 50, sceneContainer)
           handObj2.sprite.parentGroup = group3
           handObj2.tween.from({x: slotList[1].x}).to({x: slotList[0].x})
           handObj2.tween.time = 1600
@@ -802,20 +830,21 @@ export default{
             PIXI.tweenManager.removeTween(handObj2.tween)
             handObj2 = {}
           }
-          handObj2 = that.createHandTween(slotList[i].x + 10, slotList[i].y + 30, sceneContainer)
+          handObj2 = that.createHandTween(slotList[i].x + 10, slotList[i].y + 50, sceneContainer)
           handObj2.sprite.parentGroup = group3
           handObj2.tween.start()
         } else if (that.step == 4) {
           if (handObj2 && handObj2.sprite) {
             return
           }
-          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 20, sceneContainer)
+          handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 50, sceneContainer)
           handObj2.sprite.parentGroup = group3
           handObj2.tween.from({x: slotList[1].x}).to({x: slotList[0].x})
           handObj2.tween.time = 1600
           handObj2.tween.start()
         } else if (that.step == 5) {
           console.log('开始定时器啦',that.step)
+          that.step++
           that.cleartimer = setInterval(() => {
             dropGift('', that.rank)
           }, 2800)
@@ -830,6 +859,8 @@ export default{
         item.on('pointermove', onDragMove)
 
         function onDragStart (event) {
+          if (that.draggingFlag) {return}
+          that.draggingFlag = true
           this.data = event.data
           this.alpha = 0.5
           this.dragging = true
@@ -838,7 +869,7 @@ export default{
         }
         function onDragEnd (event) {
           if (!this.dragging) {return}
-          // debugger
+          that.draggingFlag = false
           this.alpha = 1
           let moveI = this.pIndex
           let endI = findCloser(this.x, this.y, 40, moveI)
@@ -849,7 +880,7 @@ export default{
             let planeObj2 = planeList[moveI]
             let planeObj1 = planeList[endI]
             if (endRank == moveRank && !slotList[endI].running) { // 合成
-              if (that.step == 1 || that.step == 5 || that.step == 4) {
+              if (that.step == 1 || that.step == 4) {
                 if (handObj2 && handObj2.sprite) {
                   sceneContainer.removeChild(handObj2.sprite)
                   PIXI.tweenManager.removeTween(handObj2.tween)
@@ -1059,25 +1090,24 @@ export default{
               tw.start()
               tw.loop = false
               tw.on('start', () => {
-                console.log('i am back')
+                slotList[ind].running = false
+                that.$set(that.slotList[ind], 'running', false)
+                PIXI.tweenManager.removeTween(tweenList[rIndex])
+                tweenList.splice(rIndex, 1)
+                runningPlanes.splice(rIndex, 1)
+                console.log('i am back', rIndex, ind)
               })
               let repeatFlag = false
               tw.on('end', () => { //对应等级的running 回了
                 if (repeatFlag) {return}
                 console.log('%c 我回了', 'color: yellow')
                 planeList[ind].texture = textureList1[rank - 1]
-                that.$set(that.planeList[ind], 'texture', textureList1[rank - 1])
-                planeList[ind].scale.set(0.26)
-                // that.$set(that.planeList[ind], 'scale', {x: 0.26, y: 0.26})
                 planeList[ind].rotation = 0
-                slotList[ind].running = false
-                that.$set(that.slotList[ind], 'running', false)
-                // sceneContainer.removeChild(planeTemp)
+                planeList[ind].scale.set(0.26)
+                that.$set(that.planeList[ind], 'texture', textureList1[rank - 1])
+                that.$set(that.planeList[ind], 'rotation', 0)
                 PIXI.tweenManager.removeTween(tw)
-                PIXI.tweenManager.removeTween(tweenList[rIndex])
                 sceneContainer.removeChild(amid)
-                runningPlanes.splice(rIndex, 1)
-                tweenList.splice(rIndex, 1)
                 trackIconList[that.total].texture = emptyIcon
                 that.total--
                 repeatFlag = true
@@ -1085,7 +1115,7 @@ export default{
                   if (handObj2 && handObj2.sprite) {
                     return
                   }
-                  handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 20, sceneContainer)
+                  handObj2 = that.createHandTween(slotList[1].x, slotList[1].y + 50, sceneContainer)
                   handObj2.sprite.parentGroup = group3
                   handObj2.tween.from({x: slotList[1].x}).to({x: slotList[0].x})
                   handObj2.tween.time = 1600
@@ -1298,9 +1328,11 @@ export default{
         url = this.androidLink;
       }
       try {
-        // dapi.openStoreUrl();
+        // FbPlayableAd.onCTAClick() // facebook 平台
+
+        // dapi.openStoreUrl();         
         // console.log('dapi open store')
-        mraid.open(url);          // ad平台【AdColony Applovin Vungle】
+        mraid.open(url);          // ad平台【AdColony Applovin Vungle】文件名unity/ merge
         console.log('mraid open store')
       } catch (err) {
         console.error(err);
