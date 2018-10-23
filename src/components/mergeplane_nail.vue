@@ -10,7 +10,6 @@ import tweenManager from 'pixi-tween'
 import FontFaceObserver from 'fontfaceobserver'
 import particles from 'pixi-particles'
 import '../assets/js/pixi-display'
-// import 'pixi-svg'
 export default{
   name: 'mergeplaneNail',
   data () {
@@ -253,13 +252,15 @@ export default{
       
 
       function layThings () { // 布置钉子奖品等
-        txt = new PIXI.Text('tap to \nselect your plane', {
-          fontSize: 30,
-          lineHeight: 38,
-          fill:  '0x000000',//'0xE26C33',
-          fontFamily: 'NumFont',
-          align: 'center'
-        })
+        // txt = new PIXI.Text('tap to \nselect your plane', {
+        //   fontSize: 30,
+        //   lineHeight: 38,
+        //   fill:  '0x000000',//'0xE26C33',
+        //   fontFamily: 'NumFont',
+        //   align: 'center'
+        // })
+        txt = new PIXI.Sprite.fromImage(configMarqee.hintUrl)
+        txt.scale.set(0.9)
         txt.anchor.set(0.5)
         txt.x = canvasW / 2
         txt.y = that.isLandscape ? logo.x + 30 : logo.x + 120
