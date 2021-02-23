@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12"></script>
+  <style>
+    *{margin: 0;padding: 0;}
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h2>Game Center</h2>
+    <ul>
+      <li v-for="(item, i) in gameList" :key="i">
+        <a :href="item.url">{{item.name}}</a>
+      </li>
+    </ul>
+  </div>
+</body>
+</html>
+<script>
+let vm = new Vue({
+  el: '#app',
+  data: ()=> {
+    return {
+      gameList: [
+        {name: '拼图', url: './mergeplane_puzzle_piece1.html'},
+        {name: '2048', url: './game2048.html'},
+        {name: 'idle', url: './idlemarket.html'},
+        {name: '华容道', url: './AnWB1010_klotski.html'},
+        {name: '消方块', url: './woodyblock_helpchickens.html'},
+        {name: '消消乐', url: './clearStar.html'},
+        {name: '消消乐2', url: './game2020.html'},
+        {name: '刮刮乐', url: './scratch_snakeblock.html'},
+        {name: '找茬', url: './finddiffonline_princess.html'},
+        {name: '填色', url: './fillMissBlock_apple.html'},
+        {name: '连线', url: './loveconnect.html'},
+        {name: '九宫格抽奖', url: './mergeplane_lottery.html'},
+        {name: 'nonogram', url: './nonogram_outline_simpson.html'},
+        {name: '轮播', url: './mergeplane_slide_choose.html'},
+        {name: 'shoot', url: './mergeplane_shootbox.html'},
+        {name: '扭蛋机', url: './mergeplane_gashapon_track.html'},
+        {name: '台球游戏', url: './poolmaster_fancyball.html'},
+      ]
+    }
+  }
+})
+</script>
