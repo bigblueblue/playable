@@ -1,0 +1,129 @@
+{"frames": [
+
+{
+	"filename": "emoj_boy_0",
+	"frame": {"x":194,"y":0,"w":44,"h":44},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":44,"h":44},
+	"sourceSize": {"w":44,"h":44},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "emoj_boy_1",
+	"frame": {"x":238,"y":0,"w":44,"h":44},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":44,"h":44},
+	"sourceSize": {"w":44,"h":44},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "emoj_girl_0",
+	"frame": {"x":322,"y":0,"w":40,"h":46},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":40,"h":46},
+	"sourceSize": {"w":40,"h":46},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "emoj_girl_1",
+	"frame": {"x":282,"y":0,"w":40,"h":45},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":40,"h":45},
+	"sourceSize": {"w":40,"h":45},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "gray_ceil",
+	"frame": {"x":0,"y":50,"w":58,"h":58},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":58,"h":58},
+	"sourceSize": {"w":58,"h":58},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "icon_coin",
+	"frame": {"x":0,"y":143,"w":108,"h":113},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":108,"h":113},
+	"sourceSize": {"w":108,"h":113},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "icon_hand",
+	"frame": {"x":320,"y":50,"w":104,"h":93},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":104,"h":93},
+	"sourceSize": {"w":104,"h":93},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "icon_love",
+	"frame": {"x":58,"y":50,"w":65,"h":58},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":65,"h":58},
+	"sourceSize": {"w":65,"h":58},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "light",
+	"frame": {"x":108,"y":143,"w":285,"h":288},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":285,"h":288},
+	"sourceSize": {"w":285,"h":288},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "orange_ceil",
+	"frame": {"x":362,"y":0,"w":50,"h":50},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":50,"h":50},
+	"sourceSize": {"w":50,"h":50},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "play_btn",
+	"frame": {"x":123,"y":50,"w":197,"h":63},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":197,"h":63},
+	"sourceSize": {"w":197,"h":63},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "score_btn",
+	"frame": {"x":98,"y":0,"w":96,"h":31},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":96,"h":31},
+	"sourceSize": {"w":96,"h":31},
+	"pivot": {"x":0.5,"y":0.5}
+},
+{
+	"filename": "tip_btn",
+	"frame": {"x":0,"y":0,"w":98,"h":31},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":98,"h":31},
+	"sourceSize": {"w":98,"h":31},
+	"pivot": {"x":0.5,"y":0.5}
+}],
+"meta": {
+	"app": "https://www.codeandweb.com/texturepacker",
+	"version": "1.0",
+	"image": "img.png",
+	"format": "RGBA8888",
+	"size": {"w":424,"h":431},
+	"scale": "1",
+	"smartupdate": "$TexturePacker:SmartUpdate:e1a63f3a0d77ef318887506b8af1b264:8c4ae5e7e0da65ebdd843088f2c8c1b5:b81f4cc63a93cd0d237e6e3b604f1d2b$"
+}
+}
